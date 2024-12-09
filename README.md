@@ -42,4 +42,4 @@ MIT
 
 ## Name
 
-"Svart" comes from Norse mythology, meaning "black" - fitting for a DNS blackhole that swallows unwanted requests.
+Svart means black in Swedish and comes from an Album from The Haunted - brutal and uncompromising, just like our approach to blocking unwanted DNS requests. 🤘
