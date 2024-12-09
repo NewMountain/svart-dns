@@ -42,4 +42,4 @@ MIT
 
 ## Name
 
-Svart means black in Swedish and comes from an Album from The Haunted - brutal and uncompromising, just like our approach to blocking unwanted DNS requests. 🤘
+Svart means black in Swedish and comes from an Album by The Haunted - brutal and uncompromising, just like our approach to blocking unwanted DNS requests. 🤘
