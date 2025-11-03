@@ -1,0 +1,143 @@
+<div class="card">
+    <div class="card-header">
+        <h2>DNS Rewrites</h2>
+    </div>
+    
+    <p style="color: #8b949e; margin-bottom: 1.5rem;">
+        Define custom DNS responses. Rewrites are checked before blocklists and upstreams.
+    </p>
+    
+    <div class="rewrites-table">
+        <div class="table-header">
+            <div class="col-enabled">Enabled</div>
+            <div>Domain</div>
+            <div>IP Addresses (space-separated)</div>
+            <div class="col-actions">Actions</div>
+        </div>
+        
+        {{range .Rewrites}}
+        <div class="table-row" data-id="{{.ID}}">
+            <div class="col-enabled">
+                <input type="checkbox" {{if .Enabled}}checked{{end}} onchange="toggleRewrite({{.ID}}, this.checked)">
+            </div>
+            <div style="padding: 0.5rem; color: #ffffff;">
+                {{.Domain}}
+            </div>
+            <div style="padding: 0.5rem; font-family: monospace; color: #ffffff;">
+                {{.IPAddresses}}
+            </div>
+            <div class="col-actions">
+                <button class="btn-icon btn-danger" onclick="deleteRewrite({{.ID}})" title="Delete">🗑</button>
+            </div>
+        </div>
+        {{end}}
+        
+        <div class="table-row table-row-new">
+            <div class="col-enabled">
+                <input type="checkbox" id="newRewriteEnabled" checked>
+            </div>
+            <div>
+                <input type="text" class="inline-input" id="newRewriteDomain" placeholder="example.com">
+            </div>
+            <div>
+                <input type="text" class="inline-input" id="newRewriteIPs" placeholder="192.168.1.1 10.0.0.1" style="font-family: monospace;">
+            </div>
+            <div class="col-actions">
+                <button class="btn-icon btn-add" onclick="addRewrite()" title="Add">+</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function addRewrite() {
+    const domain = document.getElementById('newRewriteDomain').value.trim();
+    const ipAddresses = document.getElementById('newRewriteIPs').value.trim();
+    const enabled = document.getElementById('newRewriteEnabled').checked;
+    
+    if (!domain || !ipAddresses) {
+        alert('Please enter both domain and IP addresses');
+        return;
+    }
+    
+    fetch('/api/rewrites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain, ip_addresses: ipAddresses, enabled })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.text().then(text => {
+                throw new Error('Server error: ' + text);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            document.getElementById('newRewriteDomain').value = '';
+            document.getElementById('newRewriteIPs').value = '';
+            document.getElementById('newRewriteEnabled').checked = true;
+            location.reload();
+        } else {
+            alert('Error: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error saving rewrite:', error);
+        alert('Error: ' + error.message);
+    });
+}
+
+function toggleRewrite(id, enabled) {
+    fetch('/api/rewrites/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            alert('Error toggling rewrite');
+            location.reload();
+        }
+    })
+    .catch(error => alert('Error: ' + error));
+}
+
+function updateRewrite(id, field, value) {
+    const body = {};
+    body[field] = value;
+    
+    fetch('/api/rewrites/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            alert('Error updating rewrite');
+            location.reload();
+        }
+    })
+    .catch(error => alert('Error: ' + error));
+}
+
+function deleteRewrite(id) {
+    if (!confirm('Delete this rewrite?')) return;
+    
+    fetch('/api/rewrites/' + id, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error deleting rewrite');
+        }
+    })
+    .catch(error => alert('Error: ' + error));
+}
+</script>

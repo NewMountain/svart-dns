@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - svart-dns Admin Portal</title>
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>svart-dns</h1>
+            <p class="subtitle">High-performance DNS server and admin portal</p>
+            <nav>
+                <a href="/" class="nav-item{{if eq .ActiveTab ""}} active{{end}}">Dashboard</a>
+                <a href="/upstreams" class="nav-item{{if eq .ActiveTab "upstreams"}} active{{end}}">Upstreams</a>
+                <a href="/blocklists" class="nav-item{{if eq .ActiveTab "blocklists"}} active{{end}}">Blocklists</a>
+                <a href="/clients" class="nav-item{{if eq .ActiveTab "clients"}} active{{end}}">Clients</a>
+                <a href="/rewrites" class="nav-item{{if eq .ActiveTab "rewrites"}} active{{end}}">Rewrites</a>
+                <a href="/whatif" class="nav-item{{if eq .ActiveTab "whatif"}} active{{end}}">What If</a>
+                <a href="/settings" class="nav-item{{if eq .ActiveTab "settings"}} active{{end}}">Settings</a>
+            </nav>
+        </header>
+        
+        {{.Content}}
+        
+        <footer>
+            <p>svart-dns &copy; 2025 | Built with Go</p>
+        </footer>
+    </div>
+</body>
+</html>

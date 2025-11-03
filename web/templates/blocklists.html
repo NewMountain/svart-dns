@@ -1,0 +1,150 @@
+<div class="card">
+    <div class="card-header">
+        <h2>Blocklists</h2>
+    </div>
+    
+    <div class="blocklists-table">
+        <div class="table-header">
+            <div class="col-enabled">Enabled</div>
+            <div class="col-alias">Alias</div>
+            <div class="col-url">URL</div>
+            <div class="col-count">Domains</div>
+            <div class="col-updated">Last Updated</div>
+            <div class="col-actions">Actions</div>
+        </div>
+        
+        {{range .Blocklists}}
+        <div class="table-row" data-id="{{.ID}}">
+            <div class="col-enabled">
+                <input type="checkbox" {{if .Enabled}}checked{{end}} onchange="toggleBlocklist({{.ID}})">
+            </div>
+            <div class="col-alias">
+                <input type="text" value="{{.Alias}}" onblur="updateBlocklistAlias({{.ID}}, this.value)" class="inline-input" placeholder="My Blocklist">
+            </div>
+            <div class="col-url">
+                <input type="text" value="{{.URL}}" onblur="updateBlocklistURL({{.ID}}, this.value)" class="inline-input" placeholder="https://...">
+            </div>
+            <div class="col-count">{{.DomainCount}}</div>
+            <div class="col-updated">{{.LastUpdated}}</div>
+            <div class="col-actions">
+                <button class="btn-icon" onclick="refreshBlocklist({{.ID}})" title="Refresh">🔄</button>
+                <button class="btn-icon btn-danger" onclick="deleteBlocklist({{.ID}})" title="Delete">✕</button>
+            </div>
+        </div>
+        {{end}}
+        
+        <div class="table-row table-row-new">
+            <div class="col-enabled">
+                <input type="checkbox" checked id="newEnabled">
+            </div>
+            <div class="col-alias">
+                <input type="text" placeholder="AdGuard DNS Filter" id="newAlias" class="inline-input">
+            </div>
+            <div class="col-url">
+                <input type="text" placeholder="https://adguardteam.github.io/..." id="newURL" class="inline-input">
+            </div>
+            <div class="col-count">-</div>
+            <div class="col-updated">-</div>
+            <div class="col-actions">
+                <button class="btn-icon btn-add" onclick="addBlocklist()" title="Add">+</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="help-text">
+        <strong>Supported formats:</strong>
+        <ul>
+            <li><code>||example.com^</code> - Block domain and all subdomains</li>
+            <li><code>example.com</code> - Block exact domain</li>
+            <li><code>192.168.1.1</code> - Block IP address</li>
+            <li><code>! Comment</code> - Comment lines (ignored)</li>
+        </ul>
+        <p style="margin-top: 1rem; color: #888;">Blocklists are fetched and parsed automatically. Lines starting with <code>!</code> or <code>#</code> are treated as comments.</p>
+    </div>
+</div>
+
+<script>
+function addBlocklist() {
+    const url = document.getElementById('newURL').value.trim();
+    const alias = document.getElementById('newAlias').value.trim();
+    const enabled = document.getElementById('newEnabled').checked;
+    
+    if (!url) {
+        alert('URL is required');
+        return;
+    }
+    
+    fetch('/api/blocklists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, alias, enabled })
+    })
+    .then(response => response.json())
+    .then(() => {
+        location.reload();
+    })
+    .catch(error => alert('Error adding blocklist: ' + error));
+}
+
+function updateBlocklistAlias(id, alias) {
+    fetch('/api/blocklists/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alias })
+    })
+    .then(response => response.json())
+    .catch(error => alert('Error updating alias: ' + error));
+}
+
+function updateBlocklistURL(id, url) {
+    fetch('/api/blocklists/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+    })
+    .then(response => response.json())
+    .catch(error => alert('Error updating URL: ' + error));
+}
+
+function toggleBlocklist(id) {
+    fetch('/api/blocklists/' + id + '/toggle', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .catch(error => alert('Error toggling blocklist: ' + error));
+}
+
+function refreshBlocklist(id) {
+    if (!confirm('Refresh this blocklist now?')) return;
+    
+    fetch('/api/blocklists/' + id + '/refresh', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(() => {
+        alert('Blocklist refreshed successfully');
+        location.reload();
+    })
+    .catch(error => alert('Error refreshing blocklist: ' + error));
+}
+
+function deleteBlocklist(id) {
+    if (!confirm('Delete this blocklist?')) return;
+    
+    fetch('/api/blocklists/' + id, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(() => {
+        document.querySelector('[data-id="' + id + '"]').remove();
+    })
+    .catch(error => alert('Error deleting blocklist: ' + error));
+}
+
+document.getElementById('newURL').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        addBlocklist();
+    }
+});
+</script>
