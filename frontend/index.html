@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      Defense-in-depth against the tooltip-XSS class of bug (see D1 fix):
+      even if an escaping bug slips back in, CSP blocks the resulting
+      inline-injected markup from executing as a script.
+
+      style-src keeps 'unsafe-inline' because ApexCharts injects a <style>
+      tag for chart CSS and CodeMirror 6 (style-mod) also relies on inline
+      style rules — both fail to render without it. No such allowance is
+      needed for script-src: the app has no inline <script> tags and no
+      eval()/new Function() usage.
+
+      form-action 'self' stops injected markup from posting credentials to
+      another origin. frame-ancestors is not here because browsers ignore it
+      in a meta tag; the Go server sends it (and X-Frame-Options: DENY) as
+      a header, together with this same policy (http_middleware.go).
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'"
+    />
+    <title>SVART DNS</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

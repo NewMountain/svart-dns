@@ -1,0 +1,342 @@
+/* Admin page */
+
+.admin-container {
+  padding: var(--space-xl);
+  overflow-y: auto;
+  flex: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Card overrides for admin — no padding since tables go full-width */
+.admin-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: var(--space-xl);
+  overflow: hidden;
+}
+
+.admin-card-header {
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.card-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--bg-void);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.data-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--bg-hover);
+  color: var(--text-main);
+  font-size: 0.9rem;
+  vertical-align: middle;
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tr:hover td {
+  background-color: var(--bg-hover);
+}
+
+/* Badges */
+.role-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.role-admin {
+  background: rgba(171, 157, 242, 0.15);
+  color: var(--purple);
+  border: 1px solid rgba(171, 157, 242, 0.3);
+}
+
+.role-view {
+  background: rgba(120, 220, 232, 0.15);
+  color: var(--blue);
+  border: 1px solid rgba(120, 220, 232, 0.3);
+}
+
+.key-fragment {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  background-color: var(--bg-void);
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.token-full {
+  word-break: break-all;
+  max-width: 320px;
+}
+
+.btn-icon-inline {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.btn-icon-inline:hover {
+  color: var(--blue);
+}
+
+/* Inline Forms */
+.create-panel {
+  background-color: rgba(120, 220, 232, 0.05);
+  border-bottom: 1px solid var(--border);
+  padding: var(--space-lg);
+}
+
+.admin-form-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.admin-input-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.admin-input-field {
+  background-color: var(--bg-void);
+  border: 1px solid var(--border);
+  padding: 10px;
+  border-radius: 6px;
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+}
+
+.admin-input-field:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+.admin-select {
+  background-color: var(--bg-void);
+  border: 1px solid var(--border);
+  padding: 10px;
+  border-radius: 6px;
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+}
+
+.admin-select:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+/* Token reveal */
+.token-reveal {
+  background-color: rgba(169, 220, 118, 0.1);
+  border: 1px solid var(--green);
+  padding: var(--space-lg);
+  border-radius: 8px;
+  margin-bottom: var(--space-xl);
+}
+
+.reveal-key {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.2rem;
+  color: var(--green);
+  word-break: break-all;
+  margin: 12px 0;
+  background: var(--bg-void);
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(169, 220, 118, 0.3);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Admin btn-icon overrides — delete = red, edit = blue */
+.admin-btn-icon {
+  background: transparent;
+  color: var(--text-muted);
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.admin-btn-icon:hover {
+  color: var(--red);
+  background-color: rgba(255, 97, 136, 0.1);
+  border-color: rgba(255, 97, 136, 0.3);
+}
+
+.admin-btn-edit {
+  background: transparent;
+  color: var(--text-muted);
+  padding: 6px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.admin-btn-edit:hover {
+  color: var(--blue);
+  background-color: rgba(120, 220, 232, 0.1);
+  border-color: rgba(120, 220, 232, 0.3);
+}
+
+/* Self badge */
+.self-badge {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+/* Inline edit controls */
+.admin-select-inline {
+  padding: 6px 8px;
+  font-size: 0.85rem;
+}
+
+.admin-input-inline {
+  padding: 6px 8px;
+  font-size: 0.85rem;
+}
+
+.btn-sm {
+  padding: 4px 12px;
+  font-size: 0.8rem;
+}
+
+/* Inline confirmation */
+.confirm-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-danger {
+  background-color: rgba(255, 97, 136, 0.15);
+  color: var(--red);
+  border: 1px solid rgba(255, 97, 136, 0.3);
+}
+
+.btn-danger:hover {
+  background-color: rgba(255, 97, 136, 0.25);
+}
+
+/* Replication */
+.health-healthy {
+  background: rgba(169, 220, 118, 0.15);
+  color: var(--green);
+  border: 1px solid rgba(169, 220, 118, 0.3);
+}
+
+.health-unhealthy {
+  background: rgba(255, 97, 136, 0.15);
+  color: var(--red);
+  border: 1px solid rgba(255, 97, 136, 0.3);
+}
+
+.node-id {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--blue);
+  font-size: 0.85rem;
+}
+
+.sync-config-row {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.sync-config-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .admin-card {
+    overflow-x: auto;
+  }
+
+  .admin-card-header {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .admin-form-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .admin-input-group {
+    min-width: 0;
+  }
+
+  .sync-config-item {
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+}

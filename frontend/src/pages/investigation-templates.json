@@ -1,0 +1,18 @@
+[
+  {
+    "label": "Client activity over time",
+    "sql": "SELECT client_ip, CAST(timestamp AS DATE) as day, SUM(COALESCE(coalesced_count, 1)) as queries\nFROM query_logs\nGROUP BY 1, 2\nORDER BY 1, 2"
+  },
+  {
+    "label": "Domain investigation",
+    "sql": "SELECT client_ip, query_name, SUM(COALESCE(coalesced_count, 1)) as cnt\nFROM query_logs\nWHERE query_name LIKE '%example.com%'\nGROUP BY 1, 2\nORDER BY cnt DESC\nLIMIT 100"
+  },
+  {
+    "label": "Behavioral change detection",
+    "sql": "SELECT client_ip, strftime('%Y-%m', timestamp) as month, COUNT(DISTINCT query_name) as unique_domains\nFROM query_logs\nGROUP BY 1, 2\nORDER BY 1, 2"
+  },
+  {
+    "label": "Rogue device check",
+    "sql": "SELECT client_ip, COUNT(DISTINCT query_name) as unique_domains, SUM(COALESCE(coalesced_count, 1)) as total\nFROM query_logs\nGROUP BY 1\nORDER BY unique_domains DESC\nLIMIT 20"
+  }
+]

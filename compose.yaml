@@ -1,0 +1,23 @@
+# Svart on one machine: docker compose up -d, then open http://<this-host>:3000
+# and follow the setup page (the setup token is in: docker compose logs svart).
+services:
+  svart:
+    build: .
+    container_name: svart
+    restart: unless-stopped
+    ports:
+      # Devices use port 53; Svart listens unprivileged on 5353 inside.
+      - "53:5353/udp"
+      - "53:5353/tcp"
+      - "3000:3000/tcp"
+    environment:
+      DNS_PUBLISHED_PORT: "53"
+      # Set this to the host's LAN IP so the setup page can show it.
+      # EXTERNAL_IP: "192.168.1.2"
+    volumes:
+      - svart-data:/data
+      - svart-archives:/archives
+
+volumes:
+  svart-data:
+  svart-archives:

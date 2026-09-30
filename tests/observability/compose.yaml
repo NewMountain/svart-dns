@@ -1,0 +1,99 @@
+services:
+  app:
+    image: ${APP_IMAGE:?}
+    pull_policy: never
+    entrypoint: [/test-libs/ld-linux-x86-64.so.2, --library-path, /test-libs, /usr/local/bin/svart-dns]
+    volumes:
+      - ${EVIDENCE}/svart-dns:/usr/local/bin/svart-dns:ro
+      - ${EVIDENCE}/libs:/test-libs:ro
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4318
+      PYROSCOPE_SERVER_ADDRESS: http://alloy:9999
+      ADMIN_USER: observability-proof
+      ADMIN_PASSWORD: ${SVART_TEST_PASSWORD:?}
+      ALLOW_PRIVATE_LIST_URLS: 'true'
+      LOG_FORMAT: json
+      LOG_QUERIES: 'false'
+      GOMAXPROCS: '2'
+      DB_PATH: /data/svart.db
+      ARCHIVE_PATH: /archives
+      ALLOWED_CLIENTS: 127.0.0.0/8,172.16.0.0/12
+    labels:
+      prometheus.scrape: 'true'
+      prometheus.port: '3000'
+      prometheus.path: /metrics
+      prometheus.scheme: http
+      service.name: svart-dns
+    cpus: 0.75
+    mem_limit: 1g
+  fixture:
+    image: ${FIXTURE_IMAGE:?}
+    pull_policy: never
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./list.txt:/fixture/list.txt:ro
+    cpus: 0.25
+    mem_limit: 128m
+  alloy:
+    image: ${ALLOY_IMAGE:?}
+    pull_policy: never
+    command: [run, /etc/alloy/test.alloy, --server.http.listen-addr=0.0.0.0:12345, --stability.level=public-preview, --disable-reporting]
+    volumes:
+      - ./alloy.alloy:/etc/alloy/test.alloy:ro
+      - ${EVIDENCE}/logs:/logs:ro
+    cpus: 0.5
+    mem_limit: 1g
+  prometheus:
+    image: ${PROMETHEUS_IMAGE:?}
+    pull_policy: never
+    entrypoint: [/bin/prometheus]
+    command: [--config.file=/etc/prometheus/test.yaml, --web.enable-remote-write-receiver, --web.enable-admin-api]
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/test.yaml:ro
+    cpus: 0.5
+    mem_limit: 1g
+  loki:
+    image: ${LOKI_IMAGE:?}
+    pull_policy: never
+    command: [-config.file=/etc/loki/test.yaml]
+    volumes:
+      - ${EVIDENCE}/config/loki.yaml:/etc/loki/test.yaml:ro
+    cpus: 0.5
+    mem_limit: 1g
+  tempo:
+    image: ${TEMPO_IMAGE:?}
+    pull_policy: never
+    command: [-config.file=/etc/tempo/test.yaml]
+    volumes:
+      - ${EVIDENCE}/config/tempo.yaml:/etc/tempo/test.yaml:ro
+    cpus: 0.5
+    mem_limit: 1g
+  pyroscope:
+    image: ${PYROSCOPE_IMAGE:?}
+    pull_policy: never
+    command: [-config.file=/etc/pyroscope/test.yaml]
+    volumes:
+      - ${EVIDENCE}/config/pyroscope.yaml:/etc/pyroscope/test.yaml:ro
+    cpus: 0.5
+    mem_limit: 1g
+  grafana:
+    image: ${GRAFANA_IMAGE:?}
+    pull_policy: never
+    entrypoint: [/run.sh]
+    user: '472'
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: 'true'
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: 'true'
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+      GF_ANALYTICS_CHECK_FOR_UPDATES: 'false'
+      GF_PLUGINS_PREINSTALL_DISABLED: 'true'
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+    volumes:
+      - ${EVIDENCE}/provisioning:/etc/grafana/provisioning:ro
+      - ${EVIDENCE}/dashboards:/dashboards:ro
+    cpus: 0.5
+    mem_limit: 1g
+networks:
+  default:
+    internal: true

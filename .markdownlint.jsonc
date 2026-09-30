@@ -1,0 +1,6 @@
+{
+  // Line length limit doesn't suit prose-heavy design docs
+  "MD013": false,
+  // Allow tables with compact pipe style (no spaces around pipes)
+  "MD060": false
+}

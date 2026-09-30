@@ -1,0 +1,12 @@
+goos: linux
+goarch: amd64
+pkg: github.com/yeti/svart-dns
+cpu: AMD Ryzen 9 5950X 16-Core Processor            
+BenchmarkPolicyMatch/index-4         	 8497306	       139.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPolicyMatch/index-4         	 8765397	       140.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkPolicyMatch/index-4         	 8769103	       139.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkEvaluatePolicy_Uncached-4   	 1658484	       934.2 ns/op	     633 B/op	       3 allocs/op
+BenchmarkEvaluatePolicy_Uncached-4   	  888246	      1134 ns/op	     633 B/op	       3 allocs/op
+BenchmarkEvaluatePolicy_Uncached-4   	  769346	      1495 ns/op	     634 B/op	       3 allocs/op
+PASS
+ok  	github.com/yeti/svart-dns	8.747s

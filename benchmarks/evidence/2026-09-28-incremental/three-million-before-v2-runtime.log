@@ -1,0 +1,31 @@
+=== RUN   TestListPerformanceThreeMillion
+    list_performance_test.go:65: fixture rules=3000000 ranges=8 groups=8 clients=64 toolchain=go1.27.1-X:nodwarf5 gomaxprocs=4 memory=VmHWM:	  671612 kB; VmRSS:	  671612 kB
+    list_performance_test.go:94: index_lookup sample=0 queries=1000000 hits=666667 ns_per_query=116.856 cpu=118.201ms allocated_bytes=333096 allocations=187
+    list_performance_test.go:94: index_lookup sample=1 queries=1000000 hits=666667 ns_per_query=111.622 cpu=112.735ms allocated_bytes=167760 allocations=144
+    list_performance_test.go:94: index_lookup sample=2 queries=1000000 hits=666667 ns_per_query=114.586 cpu=115.857ms allocated_bytes=167808 allocations=146
+    list_performance_test.go:115: manual_edit iteration=0 wall=2.961653594s cpu=3.014078s allocated_bytes=887975168 allocations=6005895 memory=VmHWM:	  973140 kB; VmRSS:	  973140 kB
+    list_performance_test.go:115: manual_edit iteration=1 wall=2.470344298s cpu=2.511593s allocated_bytes=887294784 allocations=6005144 memory=VmHWM:	  985268 kB; VmRSS:	  972816 kB
+    list_performance_test.go:115: manual_edit iteration=2 wall=2.345640316s cpu=2.389129s allocated_bytes=887128000 allocations=6004989 memory=VmHWM:	  985268 kB; VmRSS:	  902792 kB
+    list_performance_test.go:173: admin_read iteration=0 endpoint=metadata writer_active_at_start=true wall=218.103µs
+    list_performance_test.go:173: admin_read iteration=0 endpoint=domains writer_active_at_start=true wall=5.956195841s
+    list_performance_test.go:173: admin_read iteration=1 endpoint=metadata writer_active_at_start=false wall=4.811854ms
+    list_performance_test.go:173: admin_read iteration=1 endpoint=domains writer_active_at_start=false wall=98.874638ms
+    list_performance_test.go:173: admin_read iteration=2 endpoint=metadata writer_active_at_start=false wall=73.031µs
+    list_performance_test.go:173: admin_read iteration=2 endpoint=domains writer_active_at_start=false wall=90.083552ms
+    list_performance_test.go:173: admin_read iteration=3 endpoint=metadata writer_active_at_start=false wall=79.551µs
+    list_performance_test.go:173: admin_read iteration=3 endpoint=domains writer_active_at_start=false wall=91.241168ms
+    list_performance_test.go:173: admin_read iteration=4 endpoint=metadata writer_active_at_start=false wall=136.562µs
+    list_performance_test.go:173: admin_read iteration=4 endpoint=domains writer_active_at_start=false wall=90.612139ms
+    list_performance_test.go:173: admin_read iteration=5 endpoint=metadata writer_active_at_start=false wall=66.751µs
+    list_performance_test.go:173: admin_read iteration=5 endpoint=domains writer_active_at_start=false wall=91.110315ms
+    list_performance_test.go:173: admin_read iteration=6 endpoint=metadata writer_active_at_start=false wall=84.441µs
+    list_performance_test.go:173: admin_read iteration=6 endpoint=domains writer_active_at_start=false wall=96.188693ms
+    list_performance_test.go:173: admin_read iteration=7 endpoint=metadata writer_active_at_start=false wall=145.871µs
+    list_performance_test.go:173: admin_read iteration=7 endpoint=domains writer_active_at_start=false wall=106.637051ms
+    list_performance_test.go:173: admin_read iteration=8 endpoint=metadata writer_active_at_start=false wall=127.792µs
+    list_performance_test.go:173: admin_read iteration=8 endpoint=domains writer_active_at_start=false wall=96.591068ms
+    list_performance_test.go:173: admin_read iteration=9 endpoint=metadata writer_active_at_start=false wall=103.001µs
+    list_performance_test.go:173: admin_read iteration=9 endpoint=domains writer_active_at_start=false wall=89.591525ms
+    list_performance_test.go:179: published_refresh wall=6.814091443s memory=VmHWM:	  985924 kB; VmRSS:	  607392 kB
+--- PASS: TestListPerformanceThreeMillion (28.09s)
+PASS

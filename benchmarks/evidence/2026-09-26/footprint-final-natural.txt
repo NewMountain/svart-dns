@@ -1,0 +1,10 @@
+state                                           RSS MiB   heap MiB
+empty (no lists)                                  115.2        5.3
++ stevenblack.txt (76514; total 76514)            135.2        9.3
++ hagezi-pro.txt (228217; total 304731)           216.0       46.6
++ oisd-big.txt (243868; total 548599)             238.0       59.0
++ hagezi-ultimate.txt (284368; total 832967)      281.7       51.2
++ hagezi-tif.txt (2291474; total 3124441)         655.4      272.7
++ 20 ranges sharing 2 lists                       591.3      275.3
++ 200k unique names cached                        804.1      322.1
+  ... 15s later                                   804.1      323.0

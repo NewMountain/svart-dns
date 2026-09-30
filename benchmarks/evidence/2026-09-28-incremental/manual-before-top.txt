@@ -1,0 +1,84 @@
+File: core-performance-before-profile.test
+Build ID: a5dc36ce90c012b28442b1b83de22cfd000286c6
+Type: cpu
+Time: 2026-09-28 16:15:56 PDT
+Duration: 6.25s, Total samples = 6.35s (101.60%)
+Showing nodes accounting for 5.98s, 94.17% of 6.35s total
+Dropped 86 nodes (cum <= 0.03s)
+      flat  flat%   sum%        cum   cum%
+     1.69s 26.61% 26.61%      2.20s 34.65%  runtime.cgocall
+     0.67s 10.55% 37.17%      0.67s 10.55%  github.com/yeti/svart-dns/internal/policycore.(*DomainTable).KeyAt (inline)
+     0.51s  8.03% 45.20%      0.59s  9.29%  database/sql.(*closingMutex).RUnlock
+     0.37s  5.83% 51.02%      1.71s 26.93%  github.com/yeti/svart-dns/internal/policycore.(*IndexBuilder).Insert
+     0.33s  5.20% 56.22%      0.33s  5.20%  strings.ToLower
+     0.22s  3.46% 59.69%      0.32s  5.04%  runtime.reentersyscall
+     0.21s  3.31% 62.99%      0.21s  3.31%  runtime.memmove
+     0.18s  2.83% 65.83%      0.18s  2.83%  internal/runtime/maps.memHashAES
+     0.13s  2.05% 67.87%      2.86s 45.04%  database/sql.(*Rows).nextLocked
+     0.13s  2.05% 69.92%      0.13s  2.05%  indexbytebody
+     0.11s  1.73% 71.65%      0.11s  1.73%  internal/runtime/atomic.(*Uint32).CompareAndSwap (inline)
+     0.10s  1.57% 73.23%      1.02s 16.06%  github.com/yeti/svart-dns/internal/policycore.(*IndexBuilder).Rehash
+     0.10s  1.57% 74.80%      0.10s  1.57%  runtime.mallocgcSmallNoScanSC4
+     0.10s  1.57% 76.38%      0.10s  1.57%  sync/atomic.(*Int64).CompareAndSwap (inline)
+     0.07s  1.10% 77.48%      0.14s  2.20%  database/sql.(*Rows).scanLocked
+     0.07s  1.10% 78.58%      2.72s 42.83%  github.com/yeti/svart-dns.listRuleFeed.func1.1
+     0.07s  1.10% 79.69%      0.07s  1.10%  github.com/yeti/svart-dns/internal/listparse.isASCII (inline)
+     0.07s  1.10% 80.79%      0.08s  1.26%  github.com/yeti/svart-dns/internal/policycore.(*IndexBuilder).WithSlot
+     0.07s  1.10% 81.89%      0.13s  2.05%  runtime.exitsyscall
+     0.06s  0.94% 82.83%      0.06s  0.94%  runtime.getcallerfp
+     0.05s  0.79% 83.62%      0.23s  3.62%  database/sql.(*Rows).Scan
+     0.05s  0.79% 84.41%      0.09s  1.42%  runtime.cgoCheckPointer
+     0.05s  0.79% 85.20%      0.05s  0.79%  runtime.memclrNoHeapPointers
+     0.04s  0.63% 85.83%      2.71s 42.68%  github.com/mattn/go-sqlite3.(*SQLiteRows).Next
+     0.04s  0.63% 86.46%      0.04s  0.63%  internal/bytealg.IndexByteString
+     0.04s  0.63% 87.09%      0.22s  3.46%  internal/runtime/maps.MemHash
+     0.04s  0.63% 87.72%      0.22s  3.46%  runtime.mallocgc
+     0.04s  0.63% 88.35%      0.04s  0.63%  strings.TrimSpace
+     0.03s  0.47% 88.82%      0.07s  1.10%  database/sql.convertAssignRows
+     0.03s  0.47% 89.29%      2.63s 41.42%  github.com/mattn/go-sqlite3.(*SQLiteRows).nextSyncLocked
+     0.03s  0.47% 89.76%      0.42s  6.61%  github.com/mattn/go-sqlite3.(*SQLiteRows).nextSyncLocked.func9 (inline)
+     0.03s  0.47% 90.24%      0.35s  5.51%  github.com/mattn/go-sqlite3._Cfunc_sqlite3_column_text
+     0.03s  0.47% 90.71%      1.82s 28.66%  github.com/yeti/svart-dns/internal/policycore.(*IndexBuilder).Add
+     0.03s  0.47% 91.18%      0.29s  4.57%  hash/maphash.String
+     0.03s  0.47% 91.65%      0.05s  0.79%  runtime.mallocgcSmallScanNoHeaderSC2
+     0.02s  0.31% 91.97%      3.49s 54.96%  database/sql.(*Rows).Next
+     0.02s  0.31% 92.28%      0.07s  1.10%  github.com/yeti/svart-dns/internal/policycore.ClassifyDomain
+     0.02s  0.31% 92.60%      0.26s  4.09%  hash/maphash.rthashString
+     0.02s  0.31% 92.91%      0.24s  3.78%  runtime.memhash
+     0.01s  0.16% 93.07%      2.95s 46.46%  database/sql.(*Rows).Next.func1
+     0.01s  0.16% 93.23%      1.22s 19.21%  github.com/mattn/go-sqlite3.(*SQLiteRows).nextSyncLocked.func1 (inline)
+     0.01s  0.16% 93.39%      0.38s  5.98%  github.com/mattn/go-sqlite3._Cfunc_sqlite3_column_bytes
+     0.01s  0.16% 93.54%      0.33s  5.20%  github.com/mattn/go-sqlite3._Cfunc_sqlite3_column_type
+     0.01s  0.16% 93.70%      6.22s 97.95%  github.com/yeti/svart-dns.scanRows
+     0.01s  0.16% 93.86%      0.59s  9.29%  github.com/yeti/svart-dns/internal/listparse.NormalizeEntry
+     0.01s  0.16% 94.02%      0.05s  0.79%  github.com/yeti/svart-dns/internal/listparse.couldBeIP
+     0.01s  0.16% 94.17%      0.14s  2.20%  internal/stringslite.Index
+         0     0% 94.17%      0.52s  8.19%  database/sql.(*Rows).closemuRUnlockIfHeldByScan (inline)
+         0     0% 94.17%      0.05s  0.79%  database/sql.(*closingMutex).RLock
+         0     0% 94.17%      0.05s  0.79%  database/sql.(*closingMutex).TryRLock (inline)
+         0     0% 94.17%      0.36s  5.67%  github.com/mattn/go-sqlite3.(*SQLiteRows).nextSyncLocked.func10 (inline)
+         0     0% 94.17%      0.37s  5.83%  github.com/mattn/go-sqlite3.(*SQLiteRows).nextSyncLocked.func3 (inline)
+         0     0% 94.17%      0.17s  2.68%  github.com/mattn/go-sqlite3._Cfunc_GoStringN (inline)
+         0     0% 94.17%      1.18s 18.58%  github.com/mattn/go-sqlite3._Cfunc__sqlite3_step_internal
+         0     0% 94.17%      6.25s 98.43%  github.com/yeti/svart-dns.TestListPerformanceThreeMillion
+         0     0% 94.17%      6.25s 98.43%  github.com/yeti/svart-dns.applyPolicyChange
+         0     0% 94.17%      6.25s 98.43%  github.com/yeti/svart-dns.handleAPIClientBlockDomain
+         0     0% 94.17%      6.20s 97.64%  github.com/yeti/svart-dns.listRuleFeed.func1
+         0     0% 94.17%      6.25s 98.43%  github.com/yeti/svart-dns.readPolicySnapshot
+         0     0% 94.17%      6.25s 98.43%  github.com/yeti/svart-dns.reloadPolicyState
+         0     0% 94.17%      6.23s 98.11%  github.com/yeti/svart-dns/internal/policycore.BuildIndex
+         0     0% 94.17%      0.24s  3.78%  hash/maphash.rthash (inline)
+         0     0% 94.17%      0.17s  2.68%  internal/stringslite.IndexByte (inline)
+         0     0% 94.17%      0.05s  0.79%  runtime.convTstring
+         0     0% 94.17%      0.38s  5.98%  runtime.entersyscall
+         0     0% 94.17%      0.04s  0.63%  runtime.gcBgMarkWorker
+         0     0% 94.17%      0.04s  0.63%  runtime.gcBgMarkWorker.func2
+         0     0% 94.17%      0.04s  0.63%  runtime.gcDrain
+         0     0% 94.17%      0.17s  2.68%  runtime.gostringn
+         0     0% 94.17%      0.14s  2.20%  runtime.growslice
+         0     0% 94.17%      0.14s  2.20%  runtime.rawstring (inline)
+         0     0% 94.17%      0.06s  0.94%  runtime.systemstack
+         0     0% 94.17%      0.14s  2.20%  strings.Contains (inline)
+         0     0% 94.17%      0.14s  2.20%  strings.Index (inline)
+         0     0% 94.17%      0.04s  0.63%  strings.IndexByte (inline)
+         0     0% 94.17%      6.25s 98.43%  testing.tRunner

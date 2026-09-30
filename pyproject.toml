@@ -1,0 +1,34 @@
+[project]
+name = "svart-development-tools"
+version = "0.0.0"
+requires-python = ">=3.11"
+
+[tool.uv]
+package = false
+required-version = "==0.12.18"
+
+[tool.ruff]
+target-version = "py311"
+include = ["scripts/*.py", "benchmarks/evidence/2026-09-28-incremental/*.py", "tests/python/*.py", "tests/observability/*.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+strict = true
+files = ["scripts", "benchmarks/evidence/2026-09-28-incremental", "tests/python", "tests/observability"]
+
+[tool.coverage.run]
+branch = true
+source = ["scripts", "benchmarks/evidence/2026-09-28-incremental"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+
+[dependency-groups]
+dev = [
+    "coverage==7.16.2",
+    "mypy==2.3.1",
+    "ruff==0.16.8",
+]

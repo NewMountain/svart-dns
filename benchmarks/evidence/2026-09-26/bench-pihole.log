@@ -1,0 +1,145 @@
+  [i] Setting up user & group for the pihole user
+  [i] PIHOLE_UID not set in environment, using default (1000)
+  [i] PIHOLE_GID not set in environment, using default (1000)
+
+  [i] Starting FTL configuration
+  [i] Assigning password defined by Environment Variable
+  [i] Starting crond for scheduled scripts. Randomizing times for gravity and update checker
+
+  [i] Gravity migration checks
+2026-09-26 17:47:58.666 UTC crond: crond (busybox 1.37.0) started, log level 6
+  [i] No adlist file found, creating one with a default blocklist
+  [i] /etc/pihole/gravity.db does not exist (Likely due to a fresh volume). This is a required file for Pi-hole to operate.
+  [i] Gravity will now be run to create the database
+[K  [✓] DNS resolution is available
+
+  [i] Migrating the list's cache directory to new location...[K  [✗] Migrating the list's cache directory to new location
+  [i] Creating new gravity database
+  [i] Migrating content of /etc/pihole/adlists.list into new database
+  [i] Neutrino emissions detected...
+
+  [i] Preparing new gravity database...[K  [✓] Preparing new gravity database
+  [i] Creating new gravity databases...[K  [✓] Creating new gravity databases
+[K  [✓] Pulling blocklist source list into range
+  [i] Using libz compression
+
+  [i] Target: https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+  [i] Status: Pending...[K  [✗] Status: Retrieval failed (exit_code=7 Msg: Failed to connect to raw.githubusercontent.com:443 after 0 ms: Could not connect to server)
+  [✗] List download failed: no cached list available
+
+  [i] Building gravity tree...[K  [✓] Building gravity tree
+  [i] Building antigravity tree...[K  [✓] Building antigravity tree
+
+  [i] Number of gravity domains: 0 (0 unique domains)
+  [i] Number of antigravity domains: 0 (0 unique domains)
+  [i] Number of exact denied domains: 0
+  [i] Number of regex denied filters: 0
+  [i] Number of exact allowed domains: 0
+  [i] Number of regex allowed filters: 0
+
+  [i] Optimizing database...[K  [✓] Optimizing database
+  [i] Swapping databases...[K  [✓] Swapping databases
+  [✓] The old database remains available
+  [i] Cleaning up stray matter...[K  [✓] Cleaning up stray matter
+
+  [✓] Done.
+
+  [i] pihole-FTL pre-start checks
+  [i] Setting capabilities on pihole-FTL where possible
+  [i] Applying the following caps to pihole-FTL:
+        * CAP_CHOWN
+        * CAP_NET_BIND_SERVICE
+        * CAP_NET_RAW
+
+  [i] Starting pihole-FTL (no-daemon) as pihole
+
+fatal: unable to access 'https://github.com/pi-hole/pi-hole/': Failed to connect to github.com:443 after 0 ms: Could not connect to server
+fatal: unable to access 'https://github.com/pi-hole/web/': Failed to connect to github.com:443 after 0 ms: Could not connect to server
+fatal: unable to access 'https://github.com/pi-hole/FTL/': Failed to connect to github.com:443 after 0 ms: Could not connect to server
+  [i] Version info:
+      Core version is v6.4.3 (Latest: N/A)
+      Web version is v6.6 (Latest: N/A)
+      FTL version is v6.7.1 (Latest: N/A)
+
+2026-09-26 17:47:59.295 UTC [177M] INFO: ########## FTL started on svart-bench-tmp! ##########
+2026-09-26 17:47:59.295 UTC [177M] INFO: FTL branch: master
+2026-09-26 17:47:59.295 UTC [177M] INFO: FTL version: v6.7.1
+2026-09-26 17:47:59.295 UTC [177M] INFO: FTL commit: 0bf029ba
+2026-09-26 17:47:59.295 UTC [177M] INFO: FTL date: 2026-09-19 21:02:17 +0200
+2026-09-26 17:47:59.295 UTC [177M] INFO: FTL user: pihole
+2026-09-26 17:47:59.295 UTC [177M] INFO: Compiled for linux/amd64 (compiled on CI) using cc (Alpine 15.2.0) 15.2.0
+2026-09-26 17:47:59.356 UTC [177M] INFO: 7 FTLCONF environment variables found (7 used, 0 invalid, 0 ignored)
+2026-09-26 17:47:59.356 UTC [177M] INFO:    [✓] FTLCONF_dns_listeningMode is used
+2026-09-26 17:47:59.356 UTC [177M] INFO:    [✓] FTLCONF_misc_etc_dnsmasq_d is used
+2026-09-26 17:47:59.356 UTC [177M] INFO:    [✓] FTLCONF_webserver_api_password is used
+2026-09-26 17:47:59.356 UTC [177M] INFO:    [✓] FTLCONF_webserver_port is used
+2026-09-26 17:47:59.356 UTC [177M] INFO:    [✓] FTLCONF_dns_upstreams is used
+2026-09-26 17:47:59.356 UTC [177M] INFO:    [✓] FTLCONF_dns_rateLimit_count is used
+2026-09-26 17:47:59.356 UTC [177M] INFO:    [✓] FTLCONF_dns_port is used
+2026-09-26 17:47:59.356 UTC [177M] INFO: Wrote config file:
+2026-09-26 17:47:59.356 UTC [177M] INFO:  - 167 total entries
+2026-09-26 17:47:59.356 UTC [177M] INFO:  - 160 entries are default
+2026-09-26 17:47:59.356 UTC [177M] INFO:  - 7 entries are modified
+2026-09-26 17:47:59.356 UTC [177M] INFO:  - 5 entries are forced through environment
+2026-09-26 17:47:59.363 UTC [177M] INFO: Config file written to /etc/pihole/pihole.toml
+2026-09-26 17:47:59.373 UTC [177M] INFO: Parsed config file /etc/pihole/pihole.toml successfully
+2026-09-26 17:47:59.373 UTC [177M] INFO: PID file does not exist or not readable
+2026-09-26 17:47:59.373 UTC [177M] INFO: No other running FTL process found.
+2026-09-26 17:47:59.373 UTC [177M] WARNING: Insufficient permissions to set process priority to -10 (CAP_SYS_NICE required), process priority remains at 0
+2026-09-26 17:47:59.375 UTC [177M] INFO: PID of FTL process: 177
+2026-09-26 17:47:59.375 UTC [177M] WARNING: Linux capability CAP_SYS_NICE is not available, needed for raising the process priority set in misc.nice
+2026-09-26 17:47:59.375 UTC [177M] WARNING: Linux capability CAP_SYS_TIME is not available, needed for setting the system time from the NTP client
+2026-09-26 17:47:59.379 UTC [177M] INFO: listening on 0.0.0.0 port 42053
+2026-09-26 17:47:59.379 UTC [177M] INFO: listening on :: port 42053
+2026-09-26 17:47:59.379 UTC [177M] WARNING: No database file found, creating new (empty) database at /etc/pihole/pihole-FTL.db
+2026-09-26 17:47:59.425 UTC [177M] INFO: Database version is 1
+2026-09-26 17:47:59.425 UTC [177M] INFO: Updating long-term database to version 2
+2026-09-26 17:47:59.437 UTC [177M] INFO: Updating long-term database to version 3
+2026-09-26 17:47:59.448 UTC [177M] INFO: Updating long-term database to version 4
+2026-09-26 17:47:59.454 UTC [177M] INFO: Updating long-term database to version 5
+2026-09-26 17:47:59.467 UTC [177M] INFO: Updating long-term database to version 6
+2026-09-26 17:47:59.473 UTC [177M] INFO: Updating long-term database to version 7
+2026-09-26 17:47:59.480 UTC [177M] INFO: Updating long-term database to version 8
+2026-09-26 17:47:59.493 UTC [177M] INFO: Updating long-term database to version 9
+2026-09-26 17:47:59.499 UTC [177M] INFO: Updating long-term database to version 10
+2026-09-26 17:47:59.510 UTC [177M] INFO: Updating long-term database to version 11
+2026-09-26 17:47:59.522 UTC [177M] INFO: Updating long-term database to version 12
+2026-09-26 17:47:59.529 UTC [177M] INFO: Updating long-term database to version 13
+2026-09-26 17:47:59.538 UTC [177M] INFO: Updating long-term database to version 14
+2026-09-26 17:47:59.544 UTC [177M] INFO: Updating long-term database to version 15
+2026-09-26 17:47:59.554 UTC [177M] INFO: Updating long-term database to version 16
+2026-09-26 17:47:59.560 UTC [177M] INFO: Updating long-term database to version 17
+2026-09-26 17:47:59.569 UTC [177M] INFO: Updating long-term database to version 18
+2026-09-26 17:47:59.577 UTC [177M] INFO: Updating long-term database to version 19
+2026-09-26 17:47:59.584 UTC [177M] INFO: Updating long-term database to version 20
+2026-09-26 17:47:59.600 UTC [177M] INFO: Updating long-term database to version 21
+2026-09-26 17:47:59.607 UTC [177M] INFO: Updating long-term database to version 22
+2026-09-26 17:47:59.613 UTC [177M] INFO: Database successfully initialized
+2026-09-26 17:47:59.645 UTC [177M] WARNING: Insufficient permissions to set system time (CAP_SYS_TIME required), NTP client not available
+2026-09-26 17:47:59.645 UTC [177/T179] INFO: NTP server listening on 0.0.0.0:123 (IPv4)
+2026-09-26 17:47:59.645 UTC [177/T180] INFO: NTP server listening on :::123 (IPv6)
+2026-09-26 17:47:59.645 UTC [177M] INFO: Restored 0 API sessions from the database
+2026-09-26 17:47:59.650 UTC [177M] INFO: FTL is running as user pihole (UID 1000)
+2026-09-26 17:47:59.650 UTC [177/T181] INFO: Imported 0 queries from the on-disk database (it has 0 rows)
+2026-09-26 17:47:59.650 UTC [177/T181] INFO: Parsing queries in database
+2026-09-26 17:47:59.650 UTC [177M] WARNING: Linux capability CAP_SYS_NICE is not available, needed for raising the process priority set in misc.nice
+2026-09-26 17:47:59.650 UTC [177M] WARNING: Linux capability CAP_SYS_TIME is not available, needed for setting the system time from the NTP client
+2026-09-26 17:47:59.650 UTC [177/T181] INFO: Imported 0 queries from the long-term database
+2026-09-26 17:47:59.650 UTC [177M] INFO: Blocking status is enabled
+2026-09-26 17:47:59.650 UTC [177/T181] INFO:  -> Total DNS queries: 0
+2026-09-26 17:47:59.650 UTC [177/T181] INFO:  -> Cached DNS queries: 0
+2026-09-26 17:47:59.650 UTC [177/T181] INFO:  -> Forwarded DNS queries: 0
+2026-09-26 17:47:59.650 UTC [177/T181] INFO:  -> Blocked DNS queries: 0
+2026-09-26 17:47:59.650 UTC [177/T181] INFO:  -> Unknown DNS queries: 0
+2026-09-26 17:47:59.650 UTC [177/T181] INFO:  -> Unique domains: 0
+2026-09-26 17:47:59.650 UTC [177/T181] INFO:  -> Unique clients: 0
+2026-09-26 17:47:59.650 UTC [177/T181] INFO:  -> DNS cache records: 0
+2026-09-26 17:47:59.650 UTC [177/T185] INFO: Web server ports:
+2026-09-26 17:47:59.650 UTC [177/T181] INFO:  -> Known forward destinations: 0
+2026-09-26 17:47:59.650 UTC [177/T185] INFO:   - 0.0.0.0:42080 (HTTP, IPv4, OK)
+2026-09-26 17:47:59.651 UTC [177/T181] INFO: Compiled 0 allow and 0 deny regex for 0 client in 0.0 msec
+2026-09-26 17:47:59.651 UTC [177/T181] WARNING: List with ID 1 (https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts) was inaccessible during last gravity run
+2026-09-26 17:48:00.369 UTC [177M] ERROR: SQLite3: no such table: main.gravity in "SELECT adlist_id FROM vw_gravity WHERE domain = ?1 AND group_id IN carray(?2);" (1)
+2026-09-26 17:48:00.369 UTC [177M] ERROR: domain_in_list("ads.365cdn.is", 0x7fcfef5a0d10, gravity): Failed to perform step: SQL logic error
+2026-09-26 17:48:01.056 UTC [177/T181] INFO: Gravity database has been updated, reloading now
+2026-09-26 17:48:01.057 UTC [177/T181] INFO: Compiled 0 allow and 0 deny regex for 1 client in 0.0 msec

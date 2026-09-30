@@ -1,0 +1,26 @@
+name: Bug report
+description: Something doesn't work as documented
+body:
+  - type: input
+    attributes:
+      label: Svart version
+      description: Image tag, release, or commit
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: How do you run it?
+      options: [Docker Compose, Docker, Binary, From source]
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: What happened, and what did you expect?
+      description: For DNS behavior include the exact query, e.g. `dig @svart example.com A`.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Relevant log lines
+      description: LOG_LEVEL=debug helps. Remove anything private.
+      render: text

@@ -23,3 +23,41 @@ go.work.sum
 
 # env file
 .env
+
+# Project artifacts
+svart-dns
+svart-dns.db
+server.log
+data/
+certs/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+scripts/node_modules/
+scripts/coverage/
+.worktrees/
+benchmarks/lists/
+benchmarks/results/
+
+# TypeScript incremental build cache
+frontend/*.tsbuildinfo
+
+# Python development tools and validation output
+.venv/
+__pycache__/
+.mypy_cache/
+.ruff_cache/
+.coverage*
+coverage-python.json
+# Frontend test evidence is retained locally, not shipped.
+frontend/coverage/
+
+# Unique complete compiler coverage artifacts for each gate run
+coverage-go/
+
+# Supporting validation dependencies
+scripts/node_modules
+
+# Generated browser E2E bundle
+scripts/e2e/main.mjs

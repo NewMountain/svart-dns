@@ -1,0 +1,3 @@
+ok  	github.com/yeti/svart-dns/internal/listparse	1.007s
+ok  	github.com/yeti/svart-dns/internal/policycore	1.043s
+ok  	github.com/yeti/svart-dns	21.847s

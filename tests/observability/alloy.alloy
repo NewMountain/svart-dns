@@ -1,0 +1,34 @@
+logging { level = "info" }
+loki.source.file "app" {
+ targets = [{__path__ = "/logs/app.log", service_name = "svart-dns", instance = "svart-example"}]
+ forward_to = [loki.write.local.receiver]
+}
+loki.write "local" {
+ endpoint { url = "http://loki:3100/loki/api/v1/push" }
+}
+prometheus.scrape "svart_dns" {
+ targets = [{__address__ = "app:3000", service_name = "svart-dns", instance = "svart-example"}]
+ scrape_interval = "2s"
+ scrape_timeout = "1s"
+ forward_to = [prometheus.remote_write.local.receiver]
+}
+prometheus.remote_write "local" {
+ endpoint { url = "http://prometheus:9090/api/v1/write" }
+}
+otelcol.receiver.otlp "local" {
+ http { endpoint = "0.0.0.0:4318" }
+ output { traces = [otelcol.exporter.otlphttp.tempo.input] }
+}
+otelcol.exporter.otlphttp "tempo" {
+ client { endpoint = "http://tempo:4318" }
+}
+pyroscope.receive_http "local" {
+ http {
+  listen_address = "0.0.0.0"
+  listen_port = 9999
+ }
+ forward_to = [pyroscope.write.local.receiver]
+}
+pyroscope.write "local" {
+ endpoint { url = "http://pyroscope:4040" }
+}

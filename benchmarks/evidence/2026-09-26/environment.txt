@@ -1,0 +1,3 @@
+host: svart-bench-tmp kernel 7.0.14-17-pve cpus 24 model  AMD Ryzen Threadripper 7960X 24-Cores
+server cpus 12-15,36-39, load generator cpus 18-23,42-47, stub cpus 16-17,40-41, queries/scenario 300000, list hagezi-pro.txt (228217 lines)
+images: pihole/pihole:2026.09.0 adguard/adguardhome:v0.107.79 technitium/dns-server:15.5.0; svart /root/svart-final-bookworm

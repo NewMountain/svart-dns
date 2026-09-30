@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+# Local-export readiness only: this workflow verifies and never publishes.
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Verify in the pinned self-contained toolchain
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          revision="$(git rev-parse HEAD)"
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+          evidence="$RUNNER_TEMP/svart-verification"
+          mkdir "$evidence"
+          sbom="$(mktemp -d "$RUNNER_TEMP/svart-security.XXXXXXXX")"
+          verification=""
+          offline=""
+          cleanup() {
+            if [[ -n "$offline" ]]; then
+              docker logs "$offline" >"$evidence/offline-go.log" 2>&1 || true
+              echo "Offline verification container retained: $offline" >&2
+            fi
+            if [[ -n "$verification" ]]; then
+              docker logs "$verification" >"$evidence/verify.log" 2>&1 || true
+              docker cp "$verification:/workspace" "$evidence/failed-workspace" || true
+              docker cp "$verification:/evidence" "$evidence/failed-fixtures" || true
+              echo "Verification container retained: $verification" >&2
+            fi
+            if cp -a "$sbom" "$evidence/security"; then
+              rm -rf "$sbom"
+            else
+              echo "Scanner evidence retained at $sbom; artifact copy failed" >&2
+            fi
+          }
+          trap cleanup EXIT
+          docker build --file scripts/verify/Dockerfile --tag "svart-verify:$revision" .
+          verification="$(docker create --cpus 4 --volume /workspace --volume /root/go/pkg/mod --volume /root/.cache/go-build --volume /evidence "svart-verify:$revision")"
+          docker cp . "$verification:/workspace"
+          docker start --attach "$verification"
+          test "$(docker inspect --format '{{.State.ExitCode}}' "$verification")" -eq 0
+          docker logs "$verification" >"$evidence/verify.log" 2>&1
+          offline="$(docker create --network none --cpus 4 --volumes-from "$verification" \
+            "svart-verify:$revision" bash -ec '
+              export GOPROXY=off GOSUMDB=off GOTOOLCHAIN=local GOFLAGS="-p=4 -mod=readonly"
+              go test -timeout=30m -count=1 . ./internal/... ./internal/telemetry/testdata/version ./cmd/...
+              cd benchmarks
+              go test -timeout=30m -count=1 ./...
+            ')"
+          docker inspect "$offline" >"$evidence/offline-container.json"
+          docker start --attach "$offline"
+          test "$(docker inspect --format '{{.State.ExitCode}}' "$offline")" -eq 0
+          docker logs "$offline" >"$evidence/offline-go.log" 2>&1
+          for report in coverage-go coverage-python.json frontend/coverage scripts/coverage; do
+            mkdir -p "$evidence/$(dirname "$report")"
+            docker cp "$verification:/workspace/$report" "$evidence/$report"
+          done
+          docker cp "$verification:/evidence" "$evidence/fixtures"
+          docker rm --volumes "$offline"
+          offline=""
+          docker rm --volumes "$verification"
+          verification=""
+          SVART_E2E_IMAGE="svart-e2e:$revision" SVART_E2E_OUTPUT="$evidence/e2e" make e2e
+          bash scripts/container-security-test.sh
+          bash scripts/container-security.sh --image "svart-dns:$revision" \
+            --revision "$revision" --sbom-dir "$sbom"
+          test -s "$sbom/sbom.cdx.json"
+          test -s "$sbom/vulnerabilities.json"
+      - name: Retain verification evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: verification-${{ github.sha }}
+          path: ${{ runner.temp }}/svart-verification/
+          include-hidden-files: true
+          if-no-files-found: error

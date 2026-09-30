@@ -1,0 +1,214 @@
+/* First-run setup — extends the login card; must work at phone width. */
+/* body is fixed-height with overflow hidden (app shell), so this page is its
+   own scroll container; margin: auto centers the card without clipping it
+   when it is taller than the viewport. */
+.login-page.setup-page {
+  height: 100%;
+  overflow-y: auto;
+  align-items: flex-start;
+  padding: var(--space-lg) var(--space-md);
+  box-sizing: border-box;
+}
+
+.setup-card {
+  margin: auto;
+  width: 100%;
+  max-width: 640px;
+  box-sizing: border-box;
+  padding: var(--space-xl) clamp(var(--space-md), 5vw, 48px);
+}
+
+.setup-logo {
+  margin-bottom: var(--space-lg);
+}
+
+.setup-steps {
+  display: flex;
+  gap: var(--space-sm);
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-lg);
+  counter-reset: step;
+}
+
+.setup-steps li {
+  flex: 1;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  border-top: 3px solid var(--border);
+  padding-top: var(--space-sm);
+  counter-increment: step;
+}
+
+.setup-steps li::before {
+  content: counter(step) '. ';
+}
+
+.setup-steps li.done {
+  border-top-color: var(--green);
+}
+
+.setup-steps li.current {
+  border-top-color: var(--blue);
+  color: var(--text-main);
+}
+
+.setup-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 var(--space-md);
+}
+
+.setup-lead {
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: 0 0 var(--space-lg);
+}
+
+.setup-lead strong,
+.setup-lead code,
+.setup-warning code,
+.setup-footnote code {
+  color: var(--text-main);
+}
+
+.setup-card code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+}
+
+.setup-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.setup-options {
+  border: none;
+  padding: 0;
+  margin: 0 0 var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.setup-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--space-md);
+  row-gap: var(--space-xs);
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.setup-option:hover {
+  border-color: var(--border-hover);
+}
+
+.setup-option.selected {
+  border-color: var(--blue);
+}
+
+.setup-option input {
+  grid-row: span 2;
+  align-self: start;
+  margin-top: 4px;
+  accent-color: var(--blue);
+}
+
+.setup-option-label {
+  font-weight: 600;
+}
+
+.setup-option-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.setup-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-lg);
+  cursor: pointer;
+}
+
+.setup-toggle input {
+  accent-color: var(--green);
+}
+
+.setup-skip {
+  width: 100%;
+  margin-top: var(--space-sm);
+  padding: 12px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.setup-skip:hover {
+  color: var(--text-main);
+}
+
+.setup-addresses {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-lg);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.setup-addresses code {
+  display: inline-block;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-void);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1.1rem;
+  color: var(--green);
+}
+
+.setup-warning {
+  color: var(--yellow);
+  line-height: 1.5;
+  margin: 0 0 var(--space-md);
+}
+
+.setup-footnote {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin: var(--space-md) 0 0;
+}
+
+.setup-applied {
+  margin: var(--space-md) 0 var(--space-lg);
+  padding-left: var(--space-lg);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.login-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

@@ -1,0 +1,1 @@
+{"label":"footprint","target":"127.0.0.1:25353","clients":50,"queries":200000,"answered":200000,"blocked":0,"timeouts":0,"errors":0,"wall_seconds":2.043639513,"qps":97864.61786815138,"p50_us":460.373,"p95_us":930.556,"p99_us":1411.409,"p999_us":3359.662,"max_us":6769.957,"expected_blocked":0,"unexpected_allowed":0,"unexpected_blocked":0,"blocked_pct":0,"miss_pct":100}

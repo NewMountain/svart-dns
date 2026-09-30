@@ -1,0 +1,23 @@
+File: core-performance-after-profile.test
+Build ID: c65c382fbbe3fe0b2fdad1bdfa184e1431741b4a
+Type: cpu
+Time: 2026-09-28 16:16:28 PDT
+Duration: 20.89ms, Total samples = 10ms (47.88%)
+Showing nodes accounting for 10ms, 100% of 10ms total
+      flat  flat%   sum%        cum   cum%
+      10ms   100%   100%       10ms   100%  runtime.cgocall
+         0     0%   100%       10ms   100%  database/sql.(*Rows).Next
+         0     0%   100%       10ms   100%  database/sql.(*Rows).Next.func1
+         0     0%   100%       10ms   100%  database/sql.(*Rows).nextLocked
+         0     0%   100%       10ms   100%  github.com/mattn/go-sqlite3.(*SQLiteRows).Next
+         0     0%   100%       10ms   100%  github.com/mattn/go-sqlite3.(*SQLiteRows).nextSyncLocked
+         0     0%   100%       10ms   100%  github.com/mattn/go-sqlite3.(*SQLiteRows).nextSyncLocked.func1 (inline)
+         0     0%   100%       10ms   100%  github.com/mattn/go-sqlite3._Cfunc__sqlite3_step_internal
+         0     0%   100%       10ms   100%  github.com/yeti/svart-dns.TestListPerformanceThreeMillion
+         0     0%   100%       10ms   100%  github.com/yeti/svart-dns.applyPolicyChange
+         0     0%   100%       10ms   100%  github.com/yeti/svart-dns.handleAPIClientBlockDomain
+         0     0%   100%       10ms   100%  github.com/yeti/svart-dns.readPolicyConfig
+         0     0%   100%       10ms   100%  github.com/yeti/svart-dns.readPolicySnapshot
+         0     0%   100%       10ms   100%  github.com/yeti/svart-dns.reloadPolicyState
+         0     0%   100%       10ms   100%  github.com/yeti/svart-dns.scanRows
+         0     0%   100%       10ms   100%  testing.tRunner

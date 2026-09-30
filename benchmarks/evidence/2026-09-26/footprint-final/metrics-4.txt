@@ -1,0 +1,260 @@
+# HELP go_gc_duration_seconds A summary of the wall-time pause (stop-the-world) duration in garbage collection cycles.
+# TYPE go_gc_duration_seconds summary
+go_gc_duration_seconds{quantile="0"} 1.11e-05
+go_gc_duration_seconds{quantile="0.25"} 1.9431e-05
+go_gc_duration_seconds{quantile="0.5"} 2.3971e-05
+go_gc_duration_seconds{quantile="0.75"} 2.765e-05
+go_gc_duration_seconds{quantile="1"} 0.000111283
+go_gc_duration_seconds_sum 0.001209563
+go_gc_duration_seconds_count 43
+# HELP go_gc_gogc_percent Heap size target percentage configured by the user, otherwise 100. This value is set by the GOGC environment variable, and the runtime/debug.SetGCPercent function. Sourced from /gc/gogc:percent.
+# TYPE go_gc_gogc_percent gauge
+go_gc_gogc_percent 100
+# HELP go_gc_gomemlimit_bytes Go runtime memory limit configured by the user, otherwise math.MaxInt64. This value is set by the GOMEMLIMIT environment variable, and the runtime/debug.SetMemoryLimit function. Sourced from /gc/gomemlimit:bytes.
+# TYPE go_gc_gomemlimit_bytes gauge
+go_gc_gomemlimit_bytes 9.223372036854776e+18
+# HELP go_goroutines Number of goroutines that currently exist.
+# TYPE go_goroutines gauge
+go_goroutines 26
+# HELP go_info Information about the Go environment.
+# TYPE go_info gauge
+go_info{version="go1.27.1-X:nodwarf5"} 1
+# HELP go_memstats_alloc_bytes Number of bytes allocated in heap and currently in use. Equals to /memory/classes/heap/objects:bytes.
+# TYPE go_memstats_alloc_bytes gauge
+go_memstats_alloc_bytes 6.0469416e+07
+# HELP go_memstats_alloc_bytes_total Total number of bytes allocated in heap until now, even if released already. Equals to /gc/heap/allocs:bytes.
+# TYPE go_memstats_alloc_bytes_total counter
+go_memstats_alloc_bytes_total 6.58701672e+08
+# HELP go_memstats_buck_hash_sys_bytes Number of bytes used by the profiling bucket hash table. Equals to /memory/classes/profiling/buckets:bytes.
+# TYPE go_memstats_buck_hash_sys_bytes gauge
+go_memstats_buck_hash_sys_bytes 1.48334e+06
+# HELP go_memstats_frees_total Total number of heap objects frees. Equals to /gc/heap/frees:objects + /gc/heap/tiny/allocs:objects.
+# TYPE go_memstats_frees_total counter
+go_memstats_frees_total 8.948615e+06
+# HELP go_memstats_gc_sys_bytes Number of bytes used for garbage collection system metadata. Equals to /memory/classes/metadata/other:bytes.
+# TYPE go_memstats_gc_sys_bytes gauge
+go_memstats_gc_sys_bytes 3.789056e+06
+# HELP go_memstats_heap_alloc_bytes Number of heap bytes allocated and currently in use, same as go_memstats_alloc_bytes. Equals to /memory/classes/heap/objects:bytes.
+# TYPE go_memstats_heap_alloc_bytes gauge
+go_memstats_heap_alloc_bytes 6.0469416e+07
+# HELP go_memstats_heap_idle_bytes Number of heap bytes waiting to be used. Equals to /memory/classes/heap/released:bytes + /memory/classes/heap/free:bytes.
+# TYPE go_memstats_heap_idle_bytes gauge
+go_memstats_heap_idle_bytes 3.3185792e+07
+# HELP go_memstats_heap_inuse_bytes Number of heap bytes that are in use. Equals to /memory/classes/heap/objects:bytes + /memory/classes/heap/unused:bytes
+# TYPE go_memstats_heap_inuse_bytes gauge
+go_memstats_heap_inuse_bytes 6.2234624e+07
+# HELP go_memstats_heap_objects Number of currently allocated objects. Equals to /gc/heap/objects:objects.
+# TYPE go_memstats_heap_objects gauge
+go_memstats_heap_objects 233528
+# HELP go_memstats_heap_released_bytes Number of heap bytes released to OS. Equals to /memory/classes/heap/released:bytes.
+# TYPE go_memstats_heap_released_bytes gauge
+go_memstats_heap_released_bytes 1.2525568e+07
+# HELP go_memstats_heap_sys_bytes Number of heap bytes obtained from system. Equals to /memory/classes/heap/objects:bytes + /memory/classes/heap/unused:bytes + /memory/classes/heap/released:bytes + /memory/classes/heap/free:bytes.
+# TYPE go_memstats_heap_sys_bytes gauge
+go_memstats_heap_sys_bytes 9.5420416e+07
+# HELP go_memstats_last_gc_time_seconds Number of seconds since 1970 of last garbage collection.
+# TYPE go_memstats_last_gc_time_seconds gauge
+go_memstats_last_gc_time_seconds 1.790445266769409e+09
+# HELP go_memstats_mallocs_total Total number of heap objects allocated, both live and gc-ed. Semantically a counter version for go_memstats_heap_objects gauge. Equals to /gc/heap/allocs:objects + /gc/heap/tiny/allocs:objects.
+# TYPE go_memstats_mallocs_total counter
+go_memstats_mallocs_total 9.182143e+06
+# HELP go_memstats_mcache_inuse_bytes Number of bytes in use by mcache structures. Equals to /memory/classes/metadata/mcache/inuse:bytes.
+# TYPE go_memstats_mcache_inuse_bytes gauge
+go_memstats_mcache_inuse_bytes 18368
+# HELP go_memstats_mcache_sys_bytes Number of bytes used for mcache structures obtained from system. Equals to /memory/classes/metadata/mcache/inuse:bytes + /memory/classes/metadata/mcache/free:bytes.
+# TYPE go_memstats_mcache_sys_bytes gauge
+go_memstats_mcache_sys_bytes 32144
+# HELP go_memstats_mspan_inuse_bytes Number of bytes in use by mspan structures. Equals to /memory/classes/metadata/mspan/inuse:bytes.
+# TYPE go_memstats_mspan_inuse_bytes gauge
+go_memstats_mspan_inuse_bytes 239680
+# HELP go_memstats_mspan_sys_bytes Number of bytes used for mspan structures obtained from system. Equals to /memory/classes/metadata/mspan/inuse:bytes + /memory/classes/metadata/mspan/free:bytes.
+# TYPE go_memstats_mspan_sys_bytes gauge
+go_memstats_mspan_sys_bytes 750720
+# HELP go_memstats_next_gc_bytes Number of heap bytes when next garbage collection will take place. Equals to /gc/heap/goal:bytes.
+# TYPE go_memstats_next_gc_bytes gauge
+go_memstats_next_gc_bytes 7.1264658e+07
+# HELP go_memstats_other_sys_bytes Number of bytes used for other system allocations. Equals to /memory/classes/other:bytes.
+# TYPE go_memstats_other_sys_bytes gauge
+go_memstats_other_sys_bytes 1.704892e+06
+# HELP go_memstats_stack_inuse_bytes Number of bytes obtained from system for stack allocator in non-CGO environments. Equals to /memory/classes/heap/stacks:bytes.
+# TYPE go_memstats_stack_inuse_bytes gauge
+go_memstats_stack_inuse_bytes 1.048576e+06
+# HELP go_memstats_stack_sys_bytes Number of bytes obtained from system for stack allocator. Equals to /memory/classes/heap/stacks:bytes + /memory/classes/os-stacks:bytes.
+# TYPE go_memstats_stack_sys_bytes gauge
+go_memstats_stack_sys_bytes 1.048576e+06
+# HELP go_memstats_sys_bytes Number of bytes obtained from system. Equals to /memory/classes/total:byte.
+# TYPE go_memstats_sys_bytes gauge
+go_memstats_sys_bytes 1.04229144e+08
+# HELP go_sched_gomaxprocs_threads The current runtime.GOMAXPROCS setting, or the number of operating system threads that can execute user-level Go code simultaneously. Sourced from /sched/gomaxprocs:threads.
+# TYPE go_sched_gomaxprocs_threads gauge
+go_sched_gomaxprocs_threads 8
+# HELP go_threads Number of OS threads created.
+# TYPE go_threads gauge
+go_threads 15
+# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.
+# TYPE process_cpu_seconds_total counter
+process_cpu_seconds_total 2.69
+# HELP process_max_fds Maximum number of open file descriptors.
+# TYPE process_max_fds gauge
+process_max_fds 524287
+# HELP process_network_receive_bytes_total Number of bytes received by the process over the network.
+# TYPE process_network_receive_bytes_total counter
+process_network_receive_bytes_total 3.406115293e+09
+# HELP process_network_transmit_bytes_total Number of bytes sent by the process over the network.
+# TYPE process_network_transmit_bytes_total counter
+process_network_transmit_bytes_total 3.406084093e+09
+# HELP process_open_fds Number of open file descriptors.
+# TYPE process_open_fds gauge
+process_open_fds 19
+# HELP process_resident_memory_bytes Resident memory size in bytes.
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes 2.5899008e+08
+# HELP process_start_time_seconds Start time of the process since unix epoch in seconds.
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds 1.79044525557e+09
+# HELP process_virtual_memory_bytes Virtual memory size in bytes.
+# TYPE process_virtual_memory_bytes gauge
+process_virtual_memory_bytes 5.317705728e+09
+# HELP process_virtual_memory_max_bytes Maximum amount of virtual memory available in bytes.
+# TYPE process_virtual_memory_max_bytes gauge
+process_virtual_memory_max_bytes 1.8446744073709552e+19
+# HELP promhttp_metric_handler_requests_in_flight Current number of scrapes being served.
+# TYPE promhttp_metric_handler_requests_in_flight gauge
+promhttp_metric_handler_requests_in_flight 1
+# HELP promhttp_metric_handler_requests_total Total number of scrapes by HTTP status code.
+# TYPE promhttp_metric_handler_requests_total counter
+promhttp_metric_handler_requests_total{code="200"} 7
+promhttp_metric_handler_requests_total{code="500"} 0
+promhttp_metric_handler_requests_total{code="503"} 0
+# HELP svart_dns_acl_refused_total Queries and TCP connections refused because the source is outside ALLOWED_CLIENTS.
+# TYPE svart_dns_acl_refused_total counter
+svart_dns_acl_refused_total 0
+# HELP svart_dns_auto_refresh_stale_lists Number of lists currently past their refresh interval.
+# TYPE svart_dns_auto_refresh_stale_lists gauge
+svart_dns_auto_refresh_stale_lists 0
+# HELP svart_dns_blocklist_domains Number of domains per blocklist.
+# TYPE svart_dns_blocklist_domains gauge
+svart_dns_blocklist_domains{list_name="hagezi-pro.txt"} 228217
+svart_dns_blocklist_domains{list_name="oisd-big.txt"} 243868
+svart_dns_blocklist_domains{list_name="stevenblack.txt"} 76514
+# HELP svart_dns_cache_entries Current number of entries in the DNS cache.
+# TYPE svart_dns_cache_entries gauge
+svart_dns_cache_entries 0
+# HELP svart_dns_cache_estimated_bytes Approximate bytes retained by the current DNS cache contents.
+# TYPE svart_dns_cache_estimated_bytes gauge
+svart_dns_cache_estimated_bytes 0
+# HELP svart_dns_cache_evicted_total Total DNS cache entries evicted to stay within the byte budget (monotonic, use rate() in Grafana).
+# TYPE svart_dns_cache_evicted_total gauge
+svart_dns_cache_evicted_total 0
+# HELP svart_dns_cache_expired_total Total DNS cache entries removed after expiry (monotonic, use rate() in Grafana).
+# TYPE svart_dns_cache_expired_total gauge
+svart_dns_cache_expired_total 0
+# HELP svart_dns_cache_hits_total Total DNS cache hits (monotonic, use rate() in Grafana).
+# TYPE svart_dns_cache_hits_total gauge
+svart_dns_cache_hits_total 0
+# HELP svart_dns_cache_max_bytes DNS cache byte budget (DNS_CACHE_SIZE_MB).
+# TYPE svart_dns_cache_max_bytes gauge
+svart_dns_cache_max_bytes 6.7108864e+07
+# HELP svart_dns_cache_misses_total Total DNS cache misses (monotonic, use rate() in Grafana).
+# TYPE svart_dns_cache_misses_total gauge
+svart_dns_cache_misses_total 0
+# HELP svart_dns_cache_peak_bytes Highest observed approximate DNS cache bytes since process start.
+# TYPE svart_dns_cache_peak_bytes gauge
+svart_dns_cache_peak_bytes 0
+# HELP svart_dns_cache_peak_entries Highest observed DNS cache entry count since process start.
+# TYPE svart_dns_cache_peak_entries gauge
+svart_dns_cache_peak_entries 0
+# HELP svart_dns_cpu_percent Process CPU usage percentage (averaged over 30s sample interval).
+# TYPE svart_dns_cpu_percent gauge
+svart_dns_cpu_percent 100
+# HELP svart_dns_dashboard_stats_cache_approx_bytes Approximate bytes retained by the in-memory dashboard stats cache.
+# TYPE svart_dns_dashboard_stats_cache_approx_bytes gauge
+svart_dns_dashboard_stats_cache_approx_bytes 0
+# HELP svart_dns_dashboard_stats_cache_entries Current in-memory dashboard stats cache entries.
+# TYPE svart_dns_dashboard_stats_cache_entries gauge
+svart_dns_dashboard_stats_cache_entries 0
+# HELP svart_dns_disk_db_size_bytes Combined size of SQLite DB + WAL + SHM files.
+# TYPE svart_dns_disk_db_size_bytes gauge
+svart_dns_disk_db_size_bytes 1.454176e+06
+# HELP svart_dns_handler_panics_total DNS handler panics recovered and answered SERVFAIL.
+# TYPE svart_dns_handler_panics_total counter
+svart_dns_handler_panics_total 0
+# HELP svart_dns_list_index_bytes Bytes held by the shared index of every enabled blocklist and allowlist.
+# TYPE svart_dns_list_index_bytes gauge
+svart_dns_list_index_bytes 1.8162616e+07
+# HELP svart_dns_log_writer_dropped_total Total log entries dropped due to full channel (monotonic).
+# TYPE svart_dns_log_writer_dropped_total gauge
+svart_dns_log_writer_dropped_total 0
+# HELP svart_dns_log_writer_flush_failed_total Total transient log writer flush failures (Begin/Exec/Commit errors). Rows are retried, not dropped.
+# TYPE svart_dns_log_writer_flush_failed_total counter
+svart_dns_log_writer_flush_failed_total 0
+# HELP svart_dns_log_writer_queue_high_watermark Highest observed number of buffered entries in the log writer channel since process start.
+# TYPE svart_dns_log_writer_queue_high_watermark gauge
+svart_dns_log_writer_queue_high_watermark 0
+# HELP svart_dns_log_writer_queue_length Current number of entries buffered in the log writer channel.
+# TYPE svart_dns_log_writer_queue_length gauge
+svart_dns_log_writer_queue_length 0
+# HELP svart_dns_log_writer_spilled_total Query log entries written to the overflow spool instead of SQLite directly (replayed later, not lost).
+# TYPE svart_dns_log_writer_spilled_total counter
+svart_dns_log_writer_spilled_total 0
+# HELP svart_dns_log_writer_spool_pending_bytes Bytes of spooled query log entries not yet replayed into SQLite.
+# TYPE svart_dns_log_writer_spool_pending_bytes gauge
+svart_dns_log_writer_spool_pending_bytes 0
+# HELP svart_dns_memory_heap_alloc_bytes Go heap bytes currently allocated (live objects).
+# TYPE svart_dns_memory_heap_alloc_bytes gauge
+svart_dns_memory_heap_alloc_bytes 3.379256e+06
+# HELP svart_dns_memory_rss_bytes Process resident set size (physical memory) in bytes.
+# TYPE svart_dns_memory_rss_bytes gauge
+svart_dns_memory_rss_bytes 1.19607296e+08
+# HELP svart_dns_overload_shed_total Cache misses answered SERVFAIL at once because too many upstream resolutions were pending.
+# TYPE svart_dns_overload_shed_total counter
+svart_dns_overload_shed_total 0
+# HELP svart_dns_policy_cache_bytes Bytes used by the policy LRU cache.
+# TYPE svart_dns_policy_cache_bytes gauge
+svart_dns_policy_cache_bytes 0
+# HELP svart_dns_policy_cache_entries Current entries in the policy LRU cache.
+# TYPE svart_dns_policy_cache_entries gauge
+svart_dns_policy_cache_entries 0
+# HELP svart_dns_policy_cache_hits_total Total policy cache hits (monotonic, use rate() in Grafana).
+# TYPE svart_dns_policy_cache_hits_total gauge
+svart_dns_policy_cache_hits_total 0
+# HELP svart_dns_policy_cache_max_bytes Policy decision cache byte budget (POLICY_CACHE_SIZE_MB).
+# TYPE svart_dns_policy_cache_max_bytes gauge
+svart_dns_policy_cache_max_bytes 6.7108864e+07
+# HELP svart_dns_policy_cache_misses_total Total policy cache misses (monotonic, use rate() in Grafana).
+# TYPE svart_dns_policy_cache_misses_total gauge
+svart_dns_policy_cache_misses_total 0
+# HELP svart_dns_policy_reload_errors_total Policy reloads that failed; the previous policy stayed active.
+# TYPE svart_dns_policy_reload_errors_total counter
+svart_dns_policy_reload_errors_total 0
+# HELP svart_dns_query_duration_seconds DNS query latency distribution.
+# TYPE svart_dns_query_duration_seconds histogram
+svart_dns_query_duration_seconds_bucket{le="5e-05"} 0
+svart_dns_query_duration_seconds_bucket{le="0.0001"} 0
+svart_dns_query_duration_seconds_bucket{le="0.00025"} 0
+svart_dns_query_duration_seconds_bucket{le="0.0005"} 0
+svart_dns_query_duration_seconds_bucket{le="0.001"} 0
+svart_dns_query_duration_seconds_bucket{le="0.0025"} 0
+svart_dns_query_duration_seconds_bucket{le="0.005"} 0
+svart_dns_query_duration_seconds_bucket{le="0.01"} 0
+svart_dns_query_duration_seconds_bucket{le="0.025"} 0
+svart_dns_query_duration_seconds_bucket{le="0.05"} 0
+svart_dns_query_duration_seconds_bucket{le="0.1"} 0
+svart_dns_query_duration_seconds_bucket{le="0.25"} 0
+svart_dns_query_duration_seconds_bucket{le="0.5"} 0
+svart_dns_query_duration_seconds_bucket{le="1"} 0
+svart_dns_query_duration_seconds_bucket{le="+Inf"} 0
+svart_dns_query_duration_seconds_sum 0
+svart_dns_query_duration_seconds_count 0
+# HELP svart_dns_rate_limited_total Queries dropped or refused by the per-client rate limit (DNS_RATE_LIMIT_QPS).
+# TYPE svart_dns_rate_limited_total counter
+svart_dns_rate_limited_total 0
+# HELP svart_dns_tcp_conns_rejected_total TCP connections closed at accept because a global or per-IP connection cap was reached.
+# TYPE svart_dns_tcp_conns_rejected_total counter
+svart_dns_tcp_conns_rejected_total 0
+# HELP svart_dns_upstream_saturated_total Cache misses answered SERVFAIL because the upstream in-flight exchange cap was reached.
+# TYPE svart_dns_upstream_saturated_total counter
+svart_dns_upstream_saturated_total 0
+# HELP svart_dns_uptime_seconds Seconds since svart-dns started.
+# TYPE svart_dns_uptime_seconds gauge
+svart_dns_uptime_seconds 13.617480591

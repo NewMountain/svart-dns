@@ -1,643 +1,926 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
+	"database/sql"
 	"fmt"
-	"html/template"
+	"net"
 	"net/http"
 	"strings"
-	"time"
 )
 
-func handleAdminCSS(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/css")
-	fmt.Fprint(w, adminCSS)
-}
+// maxSmallAdminRequestBodyBytes caps single-field/single-record admin
+// mutation bodies (settings, bootstrap servers, group/rewrite CRUD, client
+// alias) — all of these are a handful of short string/bool fields and never
+// legitimately approach this size.
+const maxSmallAdminRequestBodyBytes = 16 * 1024
 
-func handleAdminHome(w http.ResponseWriter, r *http.Request) {
-	totalQueries, blockedQueries, avgLatency := getDashboardStats()
-	uptime := time.Since(serverStart)
-	uptimeStr := formatDuration(uptime)
-	cacheStats := getCacheStats()
-
-	recentQueries, _ := getRecentQueries(50)
-	topDomains, _ := getTopDomains(10)
-	topClients, _ := getTopClients(10)
-
-	data := map[string]interface{}{
-		"DNSPort":        dnsPort,
-		"AdminPort":      adminPort,
-		"Uptime":         uptimeStr,
-		"TotalQueries":   totalQueries,
-		"BlockedQueries": blockedQueries,
-		"AvgLatency":     avgLatency,
-		"CacheHits":      cacheStats.Hits,
-		"CacheMisses":    cacheStats.Misses,
-		"CacheHitRate":   cacheStats.HitRate,
-		"RecentQueries":  recentQueries,
-		"TopDomains":     topDomains,
-		"TopClients":     topClients,
-	}
-	renderPage(w, "Dashboard", "", dashboardHTML, data)
-}
-
-func handleRewrites(w http.ResponseWriter, r *http.Request) {
-	rewrites, _ := getRewrites()
-	data := map[string]interface{}{
-		"Rewrites": rewrites,
-	}
-	renderPage(w, "Rewrites", "rewrites", rewritesHTML, data)
-}
-
-func handleWhatIf(w http.ResponseWriter, r *http.Request) {
-	domain := r.URL.Query().Get("domain")
-	var results []BlocklistResult
-
-	if domain != "" {
-		domain = strings.ToLower(strings.TrimSpace(domain))
-		domain = strings.TrimSuffix(domain, ".")
-
-		allDomains := allBlocklistDomains.domains.Load().(map[int]map[string]bool)
-
-		rows, _ := db.Query("SELECT id, alias, enabled FROM blocklists ORDER BY alias")
-		defer rows.Close()
-
-		for rows.Next() {
-			var result BlocklistResult
-			rows.Scan(&result.ID, &result.Alias, &result.Enabled)
-
-			if result.Enabled {
-				domains := allDomains[result.ID]
-
-				if domains[domain] {
-					result.IsBlocked = true
-					result.MatchedRule = domain
-				} else {
-					parts := strings.Split(domain, ".")
-					for i := 1; i < len(parts); i++ {
-						subdomain := strings.Join(parts[i:], ".")
-						if domains[subdomain] {
-							result.IsBlocked = true
-							result.MatchedRule = subdomain
-							break
-						}
-					}
-
-					if !result.IsBlocked {
-						for pattern := range domains {
-							if strings.Contains(pattern, "*") && matchWildcard(pattern, domain) {
-								result.IsBlocked = true
-								result.MatchedRule = pattern
-								break
-							}
-						}
-					}
-				}
-			}
-
-			results = append(results, result)
-		}
-	}
-
-	data := map[string]interface{}{
-		"Domain":  domain,
-		"Results": results,
-	}
-	renderPage(w, "What If", "whatif", whatifHTML, data)
-}
-
-func handleClients(w http.ResponseWriter, r *http.Request) {
-	clients, _ := getAllClients()
-	groups, _ := getAllGroups()
-
-	data := map[string]interface{}{
-		"Clients": clients,
-		"Groups":  groups,
-	}
-	renderPage(w, "Clients", "clients", clientsHTML, data)
-}
-
-func handleClientDetail(w http.ResponseWriter, r *http.Request) {
-	ip := strings.TrimPrefix(r.URL.Path, "/clients/")
-	if ip == "" {
-		http.Redirect(w, r, "/clients", http.StatusSeeOther)
-		return
-	}
-
-	alias, totalQueries, avgLatency, firstSeen, lastSeen := getClientDetail(ip)
-	queries, _ := getClientQueries(ip, 100)
-	groups, _ := getClientGroups(ip)
-	allBlocklists, _ := getClientBlocklists(ip)
-	activeBlocklists, _ := getClientActiveBlocklists(ip)
-
-	firstSeenFormatted := ""
-	lastSeenFormatted := ""
-	if t, err := time.Parse("2006-01-02 15:04:05", firstSeen); err == nil {
-		firstSeenFormatted = t.Format("Jan 2 15:04:05")
-	}
-	if t, err := time.Parse("2006-01-02 15:04:05", lastSeen); err == nil {
-		lastSeenFormatted = t.Format("Jan 2 15:04:05")
-	}
-
-	data := map[string]interface{}{
-		"ClientIP":         ip,
-		"Alias":            alias,
-		"TotalQueries":     totalQueries,
-		"AvgLatency":       avgLatency,
-		"FirstSeen":        firstSeenFormatted,
-		"LastSeen":         lastSeenFormatted,
-		"Queries":          queries,
-		"Groups":           groups,
-		"AllGroups":        groups,
-		"AllBlocklists":    allBlocklists,
-		"ActiveBlocklists": activeBlocklists,
-		"BlocklistCount":   len(activeBlocklists),
-	}
-	renderPage(w, "Client Detail", "clients", clientDetailHTML, data)
-}
-
-func handleGroupDetail(w http.ResponseWriter, r *http.Request) {
-	groupIDStr := strings.TrimPrefix(r.URL.Path, "/groups/")
-	if groupIDStr == "" {
-		http.Redirect(w, r, "/clients", http.StatusSeeOther)
-		return
-	}
-
-	var groupID int
-	fmt.Sscanf(groupIDStr, "%d", &groupID)
-
-	groupName, err := getGroupName(groupID)
-	if err != nil {
-		http.Error(w, "Group not found", http.StatusNotFound)
-		return
-	}
-
-	members, _ := getGroupMembers(groupID)
-	allClients, _ := getAllClientsForGroup(groupID)
-	allBlocklists, _ := getGroupBlocklists(groupID)
-	activeBlocklists, _ := getGroupActiveBlocklists(groupID)
-
-	data := map[string]interface{}{
-		"GroupID":          groupID,
-		"GroupName":        groupName,
-		"MemberCount":      len(members),
-		"Members":          members,
-		"AllClients":       allClients,
-		"AllBlocklists":    allBlocklists,
-		"ActiveBlocklists": activeBlocklists,
-		"BlocklistCount":   len(activeBlocklists),
-	}
-	renderPage(w, "Group Detail", "clients", groupDetailHTML, data)
-}
-
-func handleSettings(w http.ResponseWriter, r *http.Request) {
-	cacheTTL, bootstrapTTL, logRetention := getSettings()
-	cacheStats := getCacheStats()
-
-	data := map[string]interface{}{
-		"CacheTTL":     cacheTTL,
-		"BootstrapTTL": bootstrapTTL,
-		"LogRetention": logRetention,
-		"CacheHits":    cacheStats.Hits,
-		"CacheMisses":  cacheStats.Misses,
-		"CacheHitRate": cacheStats.HitRate,
-		"CacheEntries": cacheStats.Entries,
-	}
-	renderPage(w, "Settings", "settings", settingsHTML, data)
-}
-
-func handleStats(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprint(w, `{"queries":0,"blocked":0,"uptime":"0s"}`)
-}
+// maxBatchAdminRequestBodyBytes caps batch admin mutation bodies (group
+// blocklist/member batch assignment, rewrites batch create — capped at 1000
+// entries downstream). Generous enough for realistic batch sizes while still
+// bounding memory use from an oversized payload.
+const maxBatchAdminRequestBodyBytes = 1024 * 1024
 
 func handleAPISetting(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	if r.Method != "PUT" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
 	key := r.URL.Path[len("/api/settings/"):]
 
-	var req struct {
-		Value string `json:"value"`
+	var req UpdateSettingRequest
+	if !decodeJSONBody(w, r, maxSmallAdminRequestBodyBytes, &req) {
+		return
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if key == "session_secret" {
+		writeError(w, http.StatusBadRequest, "session_secret is managed internally")
+		return
+	}
+	if key == "sync_secret" {
+		if err := validateSyncSecretStrength(req.Value); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
+	if err := validateSetting(key, req.Value); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
-	_, err := db.Exec("UPDATE settings SET value = ?, updated_at = CURRENT_TIMESTAMP WHERE key = ?", req.Value, key)
+	ts, nid := syncNow()
+	kind := snapshotSettings
+	if key == "sync_peers" || key == "sync_secret" || key == "sync_interval" {
+		kind |= snapshotSync
+	}
+	err := localMutation(kind, func(tx *sql.Tx) error {
+		result, err := tx.Exec("UPDATE settings SET value = ?, updated_at = ?, node_id = ? WHERE key = ?", req.Value, ts, nid, key)
+		return checkListWrite(result, err, 1)
+	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeDBError(w, err)
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]bool{"success": true})
+	if isNeverExposeSetting(key) {
+		writeJSON(w, http.StatusOK, SensitiveSettingUpdateResponse{Key: key, Updated: true})
+		return
+	}
+	writeJSON(w, http.StatusOK, SettingValueResponse{Key: key, Value: req.Value})
 }
 
 func handleAPIBootstrap(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	switch r.Method {
 	case "POST":
-		var req struct {
-			Server string `json:"server"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		var req AddBootstrapServerRequest
+		if !decodeJSONBody(w, r, maxSmallAdminRequestBodyBytes, &req) {
 			return
 		}
 
-		_, err := db.Exec("INSERT INTO bootstrap_servers (server) VALUES (?)", req.Server)
+		if err := validateHostPort(withDefaultPort(req.Server, "53")); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		ts, nid := syncNow()
+		err := localMutation(snapshotNone, func(tx *sql.Tx) error {
+			return addBootstrapServer(tx, req.Server, ts, nid)
+		})
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeDBError(w, err)
 			return
 		}
 
-		json.NewEncoder(w).Encode(map[string]bool{"success": true})
+		invalidateBootstrapCache()
+		writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
 
 	case "PUT":
-		var req struct {
-			Servers []string `json:"servers"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		var req ReplaceBootstrapServersRequest
+		if !decodeJSONBody(w, r, maxSmallAdminRequestBodyBytes, &req) {
 			return
 		}
 
+		for _, server := range req.Servers {
+			if err := validateHostPort(withDefaultPort(server, "53")); err != nil {
+				writeError(w, http.StatusBadRequest, err.Error())
+				return
+			}
+		}
 		tx, err := db.Begin()
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeDBError(w, err)
 			return
 		}
-
-		tx.Exec("DELETE FROM bootstrap_servers")
-		for _, server := range req.Servers {
-			tx.Exec("INSERT INTO bootstrap_servers (server) VALUES (?)", server)
+		defer rollbackTransaction(tx)
+		ts, nid := syncNow()
+		if err := replaceBootstrapServers(tx, req.Servers, ts, nid); err != nil {
+			writeDBError(w, err)
+			return
 		}
-
 		if err := tx.Commit(); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeDBError(w, err)
 			return
 		}
+		invalidateBootstrapCache()
 
-		json.NewEncoder(w).Encode(map[string]bool{"success": true})
+		writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
 
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
 }
 
+// handleAPICacheClear godoc
+// @Summary Clear DNS cache
+// @Description Clears the entire DNS response cache
+// @Tags Cache
+// @Security ApiKeyAuth
+// @Produce json
+// @Success 200 {object} apiResponse
+// @Failure 401 {object} apiResponse
+// @Failure 403 {object} apiResponse
+// @Router /api/cache/clear [post]
 func handleAPICacheClear(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
 	clearDNSCache()
 
-	json.NewEncoder(w).Encode(map[string]bool{"success": true})
+	writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
 }
 
 func handleAPIClient(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	path := r.URL.Path[len("/api/clients/"):]
 	parts := strings.Split(path, "/")
 
-	if len(parts) < 2 {
-		http.Error(w, "Invalid path", http.StatusBadRequest)
+	if len(parts) == 0 || parts[0] == "" {
+		writeError(w, http.StatusBadRequest, "Invalid path")
 		return
 	}
 
 	ip := parts[0]
+	if net.ParseIP(ip) == nil {
+		writeError(w, http.StatusBadRequest, "invalid client IP")
+		return
+	}
+
+	// GET /api/clients/{ip} — client detail
+	if len(parts) == 1 && r.Method == "GET" {
+		alias, totalQueries, avgLatency, firstSeen, lastSeen, err := getClientDetail(ip)
+		if err != nil {
+			writeDBError(w, err)
+			return
+		}
+		groups, err := getClientGroups(ip)
+		if err != nil {
+			writeDBError(w, err)
+			return
+		}
+		blocklists, err := getClientBlocklists(ip)
+		if err != nil {
+			writeDBError(w, err)
+			return
+		}
+		customBlocked, err := getManualBlockDomainsForClient(ip)
+		if err != nil {
+			writeDBError(w, err)
+			return
+		}
+		customAllowed, err := getManualAllowDomainsForClient(ip)
+		if err != nil {
+			writeDBError(w, err)
+			return
+		}
+		if customBlocked == nil {
+			customBlocked = []string{}
+		}
+		if customAllowed == nil {
+			customAllowed = []string{}
+		}
+		if blocklists == nil {
+			blocklists = []BlocklistAssignment{}
+		}
+		if groups == nil {
+			groups = []Group{}
+		}
+		var assignedIDs []int
+		for _, bl := range blocklists {
+			if bl.IsAssigned {
+				assignedIDs = append(assignedIDs, bl.ID)
+			}
+		}
+		resp := ClientDetailView{
+			IP:                     ip,
+			Alias:                  alias,
+			TotalQueries:           totalQueries,
+			AvgLatencyMicroseconds: avgLatency,
+			FirstSeen:              firstSeen,
+			LastSeen:               lastSeen,
+			Groups:                 groups,
+			Blocklists:             blocklists,
+			BlocklistStats:         computeBlocklistUniqueDomains(assignedIDs),
+			CustomBlocked:          customBlocked,
+			CustomAllowed:          customAllowed,
+		}
+		var pid int
+		if err := readDB.QueryRow("SELECT COALESCE((SELECT policy_id FROM client_policies WHERE client_ip=?),0)", ip).Scan(&pid); err != nil {
+			writeDBError(w, err)
+			return
+		}
+		if pid > 0 {
+			var policyName string
+			if err := db.QueryRow("SELECT name FROM policies WHERE id = ?", pid).Scan(&policyName); err != nil {
+				writeDBError(w, err)
+				return
+			}
+			resp.Policy = &PolicyReference{ID: pid, Name: policyName}
+		}
+		writeJSON(w, http.StatusOK, resp)
+		return
+	}
+
+	if len(parts) < 2 {
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
 	action := parts[1]
 
 	if action == "alias" && r.Method == "PUT" {
-		var req struct {
-			Alias string `json:"alias"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		var req UpdateClientAliasRequest
+		if !decodeJSONBody(w, r, maxSmallAdminRequestBodyBytes, &req) {
 			return
 		}
 
 		if err := setClientAlias(ip, req.Alias); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeDBError(w, err)
 			return
 		}
-		json.NewEncoder(w).Encode(map[string]bool{"success": true})
+		writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
 		return
 	}
 
 	if action == "groups" && len(parts) == 3 {
 		groupID := parts[2]
+		if _, valid := parsePathID(w, groupID); !valid {
+			return
+		}
 
 		switch r.Method {
 		case "POST":
 			if err := addClientToGroup(ip, groupID); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				writeDBError(w, err)
 				return
 			}
-			loadBlocklistsFromDB()
-			json.NewEncoder(w).Encode(map[string]bool{"success": true})
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
 
 		case "DELETE":
 			if err := removeClientFromGroup(ip, groupID); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				writeDBError(w, err)
 				return
 			}
-			loadBlocklistsFromDB()
-			json.NewEncoder(w).Encode(map[string]bool{"success": true})
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
 
 		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		}
 		return
 	}
 
 	if action == "blocklists" && len(parts) == 3 {
 		blocklistID := parts[2]
+		if _, valid := parsePathID(w, blocklistID); !valid {
+			return
+		}
 
 		switch r.Method {
 		case "POST":
 			if err := addClientBlocklist(ip, blocklistID); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				writeDBError(w, err)
 				return
 			}
-			loadBlocklistsFromDB()
-			json.NewEncoder(w).Encode(map[string]bool{"success": true})
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
 
 		case "DELETE":
 			if err := removeClientBlocklist(ip, blocklistID); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				writeDBError(w, err)
 				return
 			}
-			loadBlocklistsFromDB()
-			json.NewEncoder(w).Encode(map[string]bool{"success": true})
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
 
 		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		}
 		return
 	}
 
-	http.Error(w, "Invalid action", http.StatusBadRequest)
+	if action == "allowlists" && len(parts) == 3 {
+		allowlistID := parts[2]
+		if _, valid := parsePathID(w, allowlistID); !valid {
+			return
+		}
+
+		switch r.Method {
+		case "POST":
+			if err := addClientAllowlist(ip, allowlistID); err != nil {
+				writeDBError(w, err)
+				return
+			}
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
+
+		case "DELETE":
+			if err := removeClientAllowlist(ip, allowlistID); err != nil {
+				writeDBError(w, err)
+				return
+			}
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
+
+		default:
+			writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		}
+		return
+	}
+
+	if action == "allow-domain" {
+		handleAPIClientAllowDomain(w, r, ip, parts)
+		return
+	}
+
+	if action == "block-domain" {
+		handleAPIClientBlockDomain(w, r, ip, parts)
+		return
+	}
+
+	// /api/clients/{ip}/policy/{policyId}  or  /api/clients/{ip}/policy
+	if action == "policy" {
+		switch r.Method {
+		case "POST":
+			if len(parts) < 3 {
+				writeError(w, http.StatusBadRequest, "policy ID required")
+				return
+			}
+			pid, validID := parsePathID(w, parts[2])
+			if !validID {
+				return
+			}
+			ts, nid := syncNow()
+			_, err := execPolicyWrite(`INSERT INTO client_policies (client_ip, policy_id, updated_at, node_id) VALUES (?, ?, ?, ?)
+				ON CONFLICT(client_ip) DO UPDATE SET policy_id = ?, updated_at = ?, node_id = ?`,
+				ip, pid, ts, nid, pid, ts, nid)
+			if err != nil {
+				writeDBError(w, err)
+				return
+			}
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
+
+		case "DELETE":
+			err := localMutation(snapshotPolicy, func(tx *sql.Tx) error {
+				var count int
+				if err := tx.QueryRow("SELECT COUNT(*) FROM client_policies WHERE client_ip=?", ip).Scan(&count); err != nil {
+					return err
+				}
+				if err := writeLocalTombstone(tx, "client_policies", ip); err != nil {
+					return err
+				}
+				result, err := tx.Exec("DELETE FROM client_policies WHERE client_ip=?", ip)
+				return checkListWrite(result, err, int64(count))
+			})
+			if err != nil {
+				writeDBError(w, err)
+				return
+			}
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
+
+		default:
+			writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		}
+		return
+	}
+
+	writeError(w, http.StatusBadRequest, "Invalid action")
 }
 
 func handleAPIGroups(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
-	var req struct {
-		Name string `json:"name"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	var req CreateGroupRequest
+	if !decodeJSONBody(w, r, maxSmallAdminRequestBodyBytes, &req) {
 		return
 	}
 
+	req.Name = strings.TrimSpace(req.Name)
+	if req.Name == "" {
+		writeError(w, http.StatusBadRequest, "name required")
+		return
+	}
 	id, err := createGroup(req.Name)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeDBError(w, err)
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "id": id})
+	writeJSON(w, http.StatusCreated, CreateGroupResponse{ID: id, Name: req.Name})
 }
 
 func handleAPIGroupAction(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	path := r.URL.Path[len("/api/groups/"):]
 	parts := strings.Split(path, "/")
 
 	if len(parts) == 0 {
-		http.Error(w, "Invalid path", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "Invalid path")
 		return
 	}
 
-	var groupID int
-	fmt.Sscanf(parts[0], "%d", &groupID)
+	groupID, validID := parsePathID(w, parts[0])
+	if !validID {
+		return
+	}
 
 	if len(parts) == 1 {
 		switch r.Method {
-		case "PUT":
-			var req struct {
-				Name string `json:"name"`
+		case "GET":
+			groupName, err := getGroupName(groupID)
+			if err != nil {
+				writeDBLookupError(w, err, "group not found")
+				return
 			}
-			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+			members, err := getGroupMembers(groupID)
+			if err != nil {
+				writeDBError(w, err)
+				return
+			}
+			blocklists, err := getGroupBlocklists(groupID)
+			if err != nil {
+				writeDBError(w, err)
+				return
+			}
+			customBlocked, err := getManualBlockDomainsForGroup(groupID)
+			if err != nil {
+				writeDBError(w, err)
+				return
+			}
+			customAllowed, err := getManualAllowDomainsForGroup(groupID)
+			if err != nil {
+				writeDBError(w, err)
+				return
+			}
+			if members == nil {
+				members = []Member{}
+			}
+			if blocklists == nil {
+				blocklists = []BlocklistAssignment{}
+			}
+			if customBlocked == nil {
+				customBlocked = []string{}
+			}
+			if customAllowed == nil {
+				customAllowed = []string{}
+			}
+			// Compute unique domain stats for assigned blocklists
+			var assignedIDs []int
+			for _, bl := range blocklists {
+				if bl.IsAssigned {
+					assignedIDs = append(assignedIDs, bl.ID)
+				}
+			}
+			totalQueries, avgLatency, firstSeen, lastSeen, err := getGroupStats(groupID)
+			if err != nil {
+				writeDBError(w, err)
+				return
+			}
+			recentLogs, err := getGroupRecentLogs(groupID, 20)
+			if err != nil {
+				writeDBError(w, err)
+				return
+			}
+			resp := GroupDetailView{
+				ID:                     groupID,
+				Name:                   groupName,
+				Members:                members,
+				Blocklists:             blocklists,
+				CustomBlocked:          customBlocked,
+				CustomAllowed:          customAllowed,
+				BlocklistStats:         computeBlocklistUniqueDomains(assignedIDs),
+				TotalQueries:           totalQueries,
+				AvgLatencyMicroseconds: avgLatency,
+				FirstSeen:              firstSeen,
+				LastSeen:               lastSeen,
+				RecentLogs:             recentLogs,
+			}
+			var policyID *int
+			if err := db.QueryRow("SELECT policy_id FROM client_groups WHERE id = ?", groupID).Scan(&policyID); err != nil {
+				writeDBError(w, err)
+				return
+			}
+			if policyID != nil {
+				var policyName string
+				if err := db.QueryRow("SELECT name FROM policies WHERE id = ?", *policyID).Scan(&policyName); err != nil {
+					writeDBError(w, err)
+					return
+				}
+				resp.Policy = &PolicyReference{ID: *policyID, Name: policyName}
+			}
+			writeJSON(w, http.StatusOK, resp)
+
+		case "PUT":
+			var req UpdateGroupRequest
+			if !decodeJSONBody(w, r, maxSmallAdminRequestBodyBytes, &req) {
 				return
 			}
 
-			if err := updateGroupName(groupID, req.Name); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+			req.Name = strings.TrimSpace(req.Name)
+			if req.Name == "" {
+				writeError(w, http.StatusBadRequest, "name required")
 				return
 			}
-			json.NewEncoder(w).Encode(map[string]bool{"success": true})
+			if err := updateGroupName(groupID, req.Name); err != nil {
+				writeDBError(w, err)
+				return
+			}
+			// Group names are part of every decision the group makes.
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
 
 		case "DELETE":
 			if err := deleteGroup(groupID); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				writeDBError(w, err)
 				return
 			}
-			loadBlocklistsFromDB()
-			json.NewEncoder(w).Encode(map[string]bool{"success": true})
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
 
 		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		}
 		return
 	}
 
+	// Batch endpoints: /api/groups/{id}/blocklists/batch, /api/groups/{id}/members/batch
+	if len(parts) == 3 && parts[2] == "batch" && r.Method == "POST" {
+		switch parts[1] {
+		case "blocklists":
+			handleAPIGroupBlocklistsBatch(w, r, groupID)
+			return
+		case "members":
+			handleAPIGroupMembersBatch(w, r, groupID)
+			return
+		}
+	}
+
 	if len(parts) == 3 && parts[1] == "members" {
 		clientIP := parts[2]
+		if net.ParseIP(clientIP) == nil {
+			writeError(w, http.StatusBadRequest, "invalid client IP")
+			return
+		}
 
 		switch r.Method {
 		case "POST":
 			if err := addClientToGroup(clientIP, fmt.Sprintf("%d", groupID)); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				writeDBError(w, err)
 				return
 			}
-			loadBlocklistsFromDB()
-			json.NewEncoder(w).Encode(map[string]bool{"success": true})
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
 
 		case "DELETE":
 			if err := removeClientFromGroup(clientIP, fmt.Sprintf("%d", groupID)); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				writeDBError(w, err)
 				return
 			}
-			loadBlocklistsFromDB()
-			json.NewEncoder(w).Encode(map[string]bool{"success": true})
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
 
 		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		}
 		return
 	}
 
 	if len(parts) == 3 && parts[1] == "blocklists" {
-		var blocklistID int
-		fmt.Sscanf(parts[2], "%d", &blocklistID)
+		blocklistID, validID := parsePathID(w, parts[2])
+		if !validID {
+			return
+		}
 
 		switch r.Method {
 		case "POST":
 			if err := addGroupBlocklist(groupID, blocklistID); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				writeDBError(w, err)
 				return
 			}
-			loadBlocklistsFromDB()
-			json.NewEncoder(w).Encode(map[string]bool{"success": true})
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
 
 		case "DELETE":
 			if err := removeGroupBlocklist(groupID, blocklistID); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				writeDBError(w, err)
 				return
 			}
-			loadBlocklistsFromDB()
-			json.NewEncoder(w).Encode(map[string]bool{"success": true})
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
 
 		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		}
 		return
 	}
 
-	http.Error(w, "Invalid action", http.StatusBadRequest)
+	if len(parts) == 3 && parts[1] == "allowlists" {
+		allowlistID, validID := parsePathID(w, parts[2])
+		if !validID {
+			return
+		}
+
+		switch r.Method {
+		case "POST":
+			if err := addGroupAllowlist(groupID, allowlistID); err != nil {
+				writeDBError(w, err)
+				return
+			}
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
+
+		case "DELETE":
+			if err := removeGroupAllowlist(groupID, allowlistID); err != nil {
+				writeDBError(w, err)
+				return
+			}
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
+
+		default:
+			writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		}
+		return
+	}
+
+	if len(parts) >= 2 && parts[1] == "allow-domain" {
+		handleAPIGroupAllowDomain(w, r, groupID, parts)
+		return
+	}
+
+	if len(parts) >= 2 && parts[1] == "block-domain" {
+		handleAPIGroupBlockDomain(w, r, groupID, parts)
+		return
+	}
+
+	// /api/groups/{id}/policy/{policyId}  or  /api/groups/{id}/policy
+	if len(parts) >= 2 && parts[1] == "policy" {
+		switch r.Method {
+		case "POST":
+			if len(parts) < 3 {
+				writeError(w, http.StatusBadRequest, "policy ID required")
+				return
+			}
+			pid, validID := parsePathID(w, parts[2])
+			if !validID {
+				return
+			}
+			ts, nid := syncNow()
+			_, err := execPolicyWrite("UPDATE client_groups SET policy_id = ?, updated_at = ?, node_id = ? WHERE id = ?", pid, ts, nid, groupID)
+			if err != nil {
+				writeDBError(w, err)
+				return
+			}
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
+
+		case "DELETE":
+			ts, nid := syncNow()
+			_, err := execPolicyWrite("UPDATE client_groups SET policy_id = NULL, updated_at = ?, node_id = ? WHERE id = ?", ts, nid, groupID)
+			if err != nil {
+				writeDBError(w, err)
+				return
+			}
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
+
+		default:
+			writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		}
+		return
+	}
+
+	writeError(w, http.StatusBadRequest, "Invalid action")
 }
 
+// handleAPIGroupBlocklistsBatch assigns multiple blocklists to a group at once.
+func handleAPIGroupBlocklistsBatch(w http.ResponseWriter, r *http.Request, groupID int) {
+	var req AssignGroupBlocklistsRequest
+	if !decodeJSONBody(w, r, maxBatchAdminRequestBodyBytes, &req) {
+		return
+	}
+
+	for _, value := range req.BlocklistIDs {
+		if value <= 0 {
+			writeError(w, http.StatusBadRequest, "invalid blocklist ID")
+			return
+		}
+	}
+	err := localMutation(snapshotPolicy, func(tx *sql.Tx) error {
+		ts, nid := syncNow()
+		for _, value := range req.BlocklistIDs {
+			result, err := tx.Exec("INSERT INTO group_blocklists(group_id,blocklist_id,updated_at,node_id) VALUES(?,?,?,?) ON CONFLICT DO UPDATE SET updated_at=excluded.updated_at,node_id=excluded.node_id", groupID, value, ts, nid)
+			if err := checkListWrite(result, err, 1); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		writeDBError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, AssignGroupBlocklistsResponse{Assigned: len(req.BlocklistIDs)})
+}
+
+// handleAPIGroupMembersBatch adds multiple clients to a group at once.
+func handleAPIGroupMembersBatch(w http.ResponseWriter, r *http.Request, groupID int) {
+	var req AddGroupMembersRequest
+	if !decodeJSONBody(w, r, maxBatchAdminRequestBodyBytes, &req) {
+		return
+	}
+
+	for _, value := range req.ClientIPs {
+		if net.ParseIP(value) == nil {
+			writeError(w, http.StatusBadRequest, "invalid client IP")
+			return
+		}
+	}
+	err := localMutation(snapshotPolicy, func(tx *sql.Tx) error {
+		ts, nid := syncNow()
+		for _, value := range req.ClientIPs {
+			result, err := tx.Exec("INSERT INTO client_group_members(client_ip,group_id,updated_at,node_id) VALUES(?,?,?,?) ON CONFLICT DO UPDATE SET updated_at=excluded.updated_at,node_id=excluded.node_id", value, groupID, ts, nid)
+			if err := checkListWrite(result, err, 1); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		writeDBError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, AddGroupMembersResponse{Added: len(req.ClientIPs)})
+}
+
+// handleAPIRewrites godoc
+// @Summary Create a DNS rewrite rule
+// @Description Creates a new DNS rewrite rule mapping a domain to specific IP addresses
+// @Tags Rewrites
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param rewrite body object true "Rewrite rule with 'domain', 'ip_addresses', and 'enabled' fields"
+// @Success 201 {object} apiResponse
+// @Failure 400 {object} apiResponse
+// @Failure 401 {object} apiResponse
+// @Failure 403 {object} apiResponse
+// @Failure 500 {object} apiResponse
+// @Router /api/rewrites [post]
 func handleAPIRewrites(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	if r.Method != "POST" {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
-	var req struct {
-		Domain      string `json:"domain"`
-		IPAddresses string `json:"ip_addresses"`
-		Enabled     bool   `json:"enabled"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	var req CreateRewriteRequest
+	if !decodeJSONBody(w, r, maxSmallAdminRequestBodyBytes, &req) {
 		return
 	}
 
+	req.Domain = strings.ToLower(strings.TrimSpace(req.Domain))
+	if err := validateRewrite(req.Domain, req.IPAddresses); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	id, err := createRewrite(req.Domain, req.IPAddresses, req.Enabled)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logAdmin.Error("failed to create rewrite", "domain", req.Domain, "ip_addresses", req.IPAddresses, "error", err)
+		writeDBError(w, err)
 		return
 	}
 
-	loadRewritesFromDB()
+	logAdmin.Info("rewrite created", "rewrite_id", id, "domain", req.Domain, "ip_addresses", req.IPAddresses, "enabled", req.Enabled)
 
-	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "id": id})
+	writeJSON(w, http.StatusCreated, CreateRewriteResponse{ID: id, Domain: req.Domain, IPAddresses: req.IPAddresses, Enabled: req.Enabled})
 }
 
 func handleAPIRewriteAction(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	path := r.URL.Path[len("/api/rewrites/"):]
 	parts := strings.Split(path, "/")
 
-	if len(parts) == 0 {
-		http.Error(w, "Invalid path", http.StatusBadRequest)
+	if len(parts) != 1 {
+		writeError(w, http.StatusBadRequest, "Invalid path")
 		return
 	}
 
-	var rewriteID int
-	fmt.Sscanf(parts[0], "%d", &rewriteID)
+	rewriteID, validID := parsePathID(w, parts[0])
+	if !validID {
+		return
+	}
 
 	switch r.Method {
 	case "PUT":
-		var req struct {
-			Domain      string `json:"domain"`
-			IPAddresses string `json:"ip_addresses"`
-			Enabled     *bool  `json:"enabled"`
-		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		var req UpdateRewriteRequest
+		if !decodeJSONBody(w, r, maxSmallAdminRequestBodyBytes, &req) {
 			return
 		}
 
-		var err error
-		if req.Enabled != nil {
-			err = updateRewriteEnabled(rewriteID, *req.Enabled)
-		} else if req.Domain != "" {
-			err = updateRewriteDomain(rewriteID, req.Domain)
-		} else if req.IPAddresses != "" {
-			err = updateRewriteIPs(rewriteID, req.IPAddresses)
+		if req.Domain == "" && req.IPAddresses == "" && req.Enabled == nil {
+			writeError(w, http.StatusBadRequest, "no fields to update")
+			return
 		}
-
+		if req.Domain != "" {
+			req.Domain = strings.ToLower(strings.TrimSpace(req.Domain))
+			if !validManualDomain(req.Domain) || strings.HasPrefix(req.Domain, "*.") {
+				writeError(w, http.StatusBadRequest, "valid rewrite domain required")
+				return
+			}
+		}
+		if req.IPAddresses != "" {
+			if err := validateRewrite("example.com", req.IPAddresses); err != nil {
+				writeError(w, http.StatusBadRequest, err.Error())
+				return
+			}
+		}
+		rw, err := updateLocalRewrite(rewriteID, req)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			writeDBLookupError(w, err, "rewrite not found")
 			return
 		}
 
-		loadRewritesFromDB()
-		json.NewEncoder(w).Encode(map[string]bool{"success": true})
+		writeJSON(w, http.StatusOK, rw)
 
 	case "DELETE":
 		if err := deleteRewrite(rewriteID); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logAdmin.Error("failed to delete rewrite", "rewrite_id", rewriteID, "error", err)
+			writeDBError(w, err)
 			return
 		}
-		loadRewritesFromDB()
-		json.NewEncoder(w).Encode(map[string]bool{"success": true})
+		logAdmin.Info("rewrite deleted", "rewrite_id", rewriteID)
+		writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
 
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
 }
 
-func renderPage(w http.ResponseWriter, title, activeTab, contentTmpl string, data map[string]interface{}) {
-	contentTemplate := template.Must(template.New("content").Parse(contentTmpl))
-	var contentBuf bytes.Buffer
-	if err := contentTemplate.Execute(&contentBuf, data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+// handleAPIRewritesBatch godoc
+// @Summary Batch create DNS rewrite rules
+// @Description Creates multiple DNS rewrite rules at once (maximum 1000 per request)
+// @Tags Rewrites
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param rewrites body object true "Object with 'rewrites' array, each containing 'domain', 'ip_addresses', and 'enabled'"
+// @Success 201 {object} apiResponse
+// @Failure 400 {object} apiResponse
+// @Failure 401 {object} apiResponse
+// @Failure 403 {object} apiResponse
+// @Failure 500 {object} apiResponse
+// @Router /api/rewrites/batch [post]
+func handleAPIRewritesBatch(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
-	layoutData := map[string]interface{}{
-		"Title":     title,
-		"ActiveTab": activeTab,
-		"Content":   template.HTML(contentBuf.String()),
+	var req CreateRewritesBatchRequest
+	if !decodeJSONBody(w, r, maxBatchAdminRequestBodyBytes, &req) {
+		return
 	}
 
-	layoutTemplate := template.Must(template.New("layout").Parse(layoutHTML))
-	w.Header().Set("Content-Type", "text/html")
-	if err := layoutTemplate.Execute(w, layoutData); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if len(req.Rewrites) > 1000 {
+		writeError(w, http.StatusBadRequest, "maximum 1000 rewrites per batch")
+		return
 	}
-}
 
-func formatDuration(d time.Duration) string {
-	hours := int(d.Hours())
-	minutes := int(d.Minutes()) % 60
-	seconds := int(d.Seconds()) % 60
+	for i := range req.Rewrites {
+		rw := &req.Rewrites[i]
+		rw.Domain = strings.ToLower(strings.TrimSpace(rw.Domain))
+		if err := validateRewrite(rw.Domain, rw.IPAddresses); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
+	var created []CreatedRewriteView
+	err := localMutation(snapshotRewrites, func(tx *sql.Tx) error {
+		for _, rw := range req.Rewrites {
+			ts, nid := syncNow()
+			result, err := tx.Exec("INSERT INTO rewrites(domain,target,ip_addresses,enabled,updated_at,node_id) VALUES(?,'',?,?,?,?)", rw.Domain, rw.IPAddresses, rw.Enabled, ts, nid)
+			if err := checkListWrite(result, err, 1); err != nil {
+				return err
+			}
+			id, err := result.LastInsertId()
+			if err != nil {
+				return err
+			}
+			created = append(created, CreatedRewriteView{ID: id, Domain: rw.Domain, IPAddresses: rw.IPAddresses, Enabled: rw.Enabled})
+		}
+		return nil
+	})
+	if err != nil {
+		writeDBError(w, err)
+		return
+	}
 
-	if hours > 24 {
-		days := hours / 24
-		hours = hours % 24
-		return fmt.Sprintf("%dd %dh %dm", days, hours, minutes)
+	if created == nil {
+		created = []CreatedRewriteView{}
 	}
-	if hours > 0 {
-		return fmt.Sprintf("%dh %dm %ds", hours, minutes, seconds)
-	}
-	if minutes > 0 {
-		return fmt.Sprintf("%dm %ds", minutes, seconds)
-	}
-	return fmt.Sprintf("%ds", seconds)
+	writeJSON(w, http.StatusCreated, created)
 }

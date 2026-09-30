@@ -1,0 +1,16 @@
+{
+  "component": "DuckDB sqlite_scanner extension",
+  "duckdb_version": "v1.1.3",
+  "extension_version": "d5d6265",
+  "platform": "linux_amd64",
+  "architecture": "ELF64 x86-64 (machine 62)",
+  "source_repository": "https://github.com/duckdb/duckdb-sqlite",
+  "source_license": "https://github.com/duckdb/duckdb-sqlite/blob/d5d6265/LICENSE",
+  "license": "MIT",
+  "license_file": "LICENSE.sqlite-scanner",
+  "distribution": "https://extensions.duckdb.org/v1.1.3/linux_amd64/sqlite_scanner.duckdb_extension.gz",
+  "distribution_sha256": "75dadaaa1f3283c6028fb6c8172a4012f03daf19bb85c0a2d5ee98a2d91783ec",
+  "checksums": "SHA256SUMS",
+  "verification": "HTTPS download decompressed and compared byte-for-byte with the vendored binary; embedded DuckDB version, extension revision and platform metadata inspected; LOAD runs with signature checks enabled.",
+  "verified_on": "2026-09-26"
+}

@@ -1,0 +1,5 @@
+--- FAIL: TestIndexFootprintIsReadOnly (0.00s)
+    core_test.go:84: footprint read modified the immutable complex-rule backing array
+FAIL
+FAIL	github.com/yeti/svart-dns/internal/policycore	0.004s
+FAIL

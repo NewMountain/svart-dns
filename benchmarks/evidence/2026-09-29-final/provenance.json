@@ -1,0 +1,37 @@
+{
+  "normalization": "Private originals are unchanged. Public serial-summary.json normalizes the archive path and adds an explicit correction of raw-oracle scope; original oracle wording is retained as superseded metadata. No record, result, failure or timing is removed. Telemetry summary remains byte-identical to its private original.",
+  "files": [
+    {
+      "public_file": "serial-summary.json",
+      "original_file": "final-serial-summary.json",
+      "original_bytes": 244898,
+      "original_sha256": "402b5f12400b91883fc06fafc94df8d83901020852e1f112e9688de19180d055",
+      "public_bytes": 251216,
+      "public_sha256": "e191b836b2e768421dccf7878ef6b8f00a699bcd3be1fbbd6ee209cce73db189",
+      "normalized_fields": [
+        "archive.http /api/archive/status body.data.archive_path",
+        "logging[*].raw_original_oracle.oracle (original retained as superseded_oracle_claim)",
+        "logging[*].raw_original_oracle.verification_scope (added)",
+        "raw_oracle_scope_correction (added)"
+      ]
+    },
+    {
+      "public_file": "telemetry-summary.json",
+      "original_file": "final-telemetry-ab901e3-summary.json",
+      "original_bytes": 229264,
+      "original_sha256": "27b1e3f2eb96f96aec33c79ea07340bd78d269658694dde577ef6e5dd4f01afb",
+      "public_bytes": 229264,
+      "public_sha256": "27b1e3f2eb96f96aec33c79ea07340bd78d269658694dde577ef6e5dd4f01afb",
+      "normalized_fields": []
+    }
+  ],
+  "diagnostic_archive": {
+    "public_file": "diagnostic-profiles.json.gz",
+    "compressed_bytes": 131185,
+    "compressed_sha256": "5028ac8aaddd6678f7695f0e408cbc81c4fa5f5dd84e1f796d12bdb33655d46c",
+    "uncompressed_bytes": 825191,
+    "uncompressed_sha256": "01d012c5f7601d33e241be33bfbdae94631d5cfbc052965f7118300438ca46d9",
+    "report_count": 24,
+    "normalization": "None. Individual original report and binary profile SHA256 values are inside the archive."
+  }
+}

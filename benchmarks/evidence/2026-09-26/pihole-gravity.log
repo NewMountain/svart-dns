@@ -1,0 +1,29 @@
+[K  [✓] DNS resolution is available
+
+  [i] Neutrino emissions detected...
+
+  [i] Preparing new gravity database...[K  [✓] Preparing new gravity database
+  [i] Creating new gravity databases...[K  [✓] Creating new gravity databases
+[K  [✓] Pulling blocklist source list into range
+  [i] Using libz compression
+
+  [i] Target: http://127.0.0.1:40080/hagezi-pro.txt
+  [i] Status: Pending...[K  [✓] Status: Retrieval successful
+  [✓] Parsed 228217 exact domains and 0 ABP-style domains (blocking, ignored 0 non-domain entries)
+
+  [i] Building gravity tree...[K  [✓] Building gravity tree
+  [i] Building antigravity tree...[K  [✓] Building antigravity tree
+
+  [i] Number of gravity domains: 228217 (228217 unique domains)
+  [i] Number of antigravity domains: 0 (0 unique domains)
+  [i] Number of exact denied domains: 0
+  [i] Number of regex denied filters: 0
+  [i] Number of exact allowed domains: 0
+  [i] Number of regex allowed filters: 0
+
+  [i] Optimizing database...[K  [✓] Optimizing database
+  [i] Swapping databases...[K  [✓] Swapping databases
+  [✓] The old database remains available
+  [i] Cleaning up stray matter...[K  [✓] Cleaning up stray matter
+
+  [✓] Done.

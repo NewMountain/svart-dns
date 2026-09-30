@@ -1,0 +1,7 @@
+apiVersion: 1
+providers:
+  - name: Svart
+    folder: Svart DNS
+    type: file
+    options:
+      path: /dashboards

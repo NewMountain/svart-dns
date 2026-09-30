@@ -1,0 +1,55 @@
+2026/09/26 17:51:06.991598 [info] starting adguard home version="AdGuard Home, version v0.107.79"
+2026/09/26 17:51:06.992002 [info] this is the first time adguard home has been launched
+2026/09/26 17:51:06.992014 [info] checking if adguard home has the necessary permissions
+2026/09/26 17:51:06.992184 [error] failed to bind to port 53; binding to port 53 is required for a dns server err="listen tcp 127.0.0.1:53: bind: address already in use"
+2026/09/26 17:51:06.992193 [info] adguard home can bind to port 53
+2026/09/26 17:51:06.993152 [info] tls_manager: using default ciphers
+2026/09/26 17:51:07.000786 [info] webapi: initializing
+2026/09/26 17:51:07.000809 [info] webapi: This is the first launch of AdGuard Home, redirecting everything to /install.html
+2026/09/26 17:51:07.000855 [info] permcheck: warning: found unexpected permissions type=directory path=/opt/adguardhome/work perm=0755 want=0700
+2026/09/26 17:51:07.000894 [info] webapi: AdGuard Home is available at the following addresses:
+2026/09/26 17:51:07.001014 [info] webapi: serving url=http://127.0.0.1:3000
+2026/09/26 17:51:07.001018 [info] webapi: serving url=http://[::1]:3000
+2026/09/26 17:51:07.001039 [info] starting plain server server=plain addr=0.0.0.0:3000
+2026/09/26 17:51:08.056550 [info] dnsproxy: upstream mode is set mode=load_balance
+2026/09/26 17:51:08.056573 [info] dnsproxy: cache enabled size=4096
+2026/09/26 17:51:08.056579 [info] dnsproxy: max goroutines is set count=300
+2026/09/26 17:51:08.056607 [info] dnsproxy: server will refuse requests of type any
+2026/09/26 17:51:08.056613 [info] dnsproxy: upstream mode is set mode=load_balance
+2026/09/26 17:51:08.056617 [info] dnsproxy: cache enabled size=4194304
+2026/09/26 17:51:08.056621 [info] dnsproxy: max goroutines is set count=300
+2026/09/26 17:51:08.057322 [info] addrproc: processing addresses
+2026/09/26 17:51:08.058548 [info] dnsproxy: starting dns proxy server
+2026/09/26 17:51:08.058555 [info] dnsproxy: creating udp server socket addr=127.0.0.1:43053
+2026/09/26 17:51:08.058593 [info] dnsproxy: listening to udp addr=127.0.0.1:43053
+2026/09/26 17:51:08.058598 [info] dnsproxy: creating tcp server socket addr=127.0.0.1:43053
+2026/09/26 17:51:08.058629 [info] dnsproxy: listening to tcp addr=127.0.0.1:43053
+2026/09/26 17:51:08.058665 [info] dnsproxy: entering udp listener loop addr=127.0.0.1:43053
+2026/09/26 17:51:08.058759 [info] dnsproxy: entering listener loop proto=tcp addr=127.0.0.1:43053
+2026/09/26 17:51:08.064528 [info] webapi: serving url=http://127.0.0.1:43080
+2026/09/26 17:51:08.064538 [info] starting plain server server=plain addr=127.0.0.1:43080
+2026/09/26 17:51:08.123307 [info] webapi: successful login user=bench ip=127.0.0.1
+2026/09/26 17:51:08.131605 [info] dnsforward: starting reconfiguring server
+2026/09/26 17:51:08.131612 [info] dnsproxy: stopping server
+2026/09/26 17:51:08.131643 [info] dnsproxy: stopped dns proxy server
+2026/09/26 17:51:08.231885 [info] dnsproxy: upstream mode is set mode=load_balance
+2026/09/26 17:51:08.231893 [info] dnsproxy: cache enabled size=4096
+2026/09/26 17:51:08.231913 [info] dnsproxy: max goroutines is set count=300
+2026/09/26 17:51:08.231923 [info] addrproc: finished processing addresses
+2026/09/26 17:51:08.231937 [info] dnsproxy: server will refuse requests of type any
+2026/09/26 17:51:08.231943 [info] dnsproxy: upstream mode is set mode=load_balance
+2026/09/26 17:51:08.231947 [info] dnsproxy: cache enabled size=4194304
+2026/09/26 17:51:08.231952 [info] dnsproxy: max goroutines is set count=300
+2026/09/26 17:51:08.232260 [info] dnsproxy: starting dns proxy server
+2026/09/26 17:51:08.232265 [info] dnsproxy: creating udp server socket addr=127.0.0.1:43053
+2026/09/26 17:51:08.232288 [info] addrproc: processing addresses
+2026/09/26 17:51:08.232300 [info] dnsproxy: listening to udp addr=127.0.0.1:43053
+2026/09/26 17:51:08.232304 [info] dnsproxy: creating tcp server socket addr=127.0.0.1:43053
+2026/09/26 17:51:08.232330 [info] dnsproxy: listening to tcp addr=127.0.0.1:43053
+2026/09/26 17:51:08.232352 [info] dnsforward: finished reconfiguring server
+2026/09/26 17:51:08.232377 [info] dnsproxy: entering udp listener loop addr=127.0.0.1:43053
+2026/09/26 17:51:08.232394 [info] dnsproxy: entering listener loop proto=tcp addr=127.0.0.1:43053
+2026/09/26 17:51:08.564140 [info] filtering: saving contents id=1790445069 path=/opt/adguardhome/work/data/filters/1790445069.txt
+2026/09/26 17:51:08.573286 [info] filtering: filter updated id=1790445069 bytes_written=4364580 rules_count=228217
+2026/09/26 17:51:13.059329 [error] filtering: changing last modified time err="chtimes /opt/adguardhome/work/data/filters/1.txt: no such file or directory"
+2026/09/26 17:51:13.059370 [error] filtering: updating filter url=https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt err="Get \"https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt\": dial tcp 198.19.109.169:443: connect: network is unreachable"

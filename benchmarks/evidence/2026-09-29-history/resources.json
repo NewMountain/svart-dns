@@ -1,0 +1,150 @@
+{
+  "baseline": {
+    "sampled_peak_total_rss_kib": 340704,
+    "sampled_peak_server_rss_kib": 340704,
+    "sampled_peak_worker_rss_kib": 0,
+    "observed_server_vmhwm_kib": 340704,
+    "observed_worker_vmhwm_kib": 0,
+    "workers_observed": 0,
+    "io_by_process": [
+      {
+        "role": "server",
+        "last": {
+          "rchar": 113460372450,
+          "wchar": 12314513771,
+          "syscr": 27802192,
+          "syscw": 3102638,
+          "read_bytes": 31145635840,
+          "write_bytes": 12517605376,
+          "cancelled_write_bytes": 0
+        },
+        "first": {
+          "rchar": 4148,
+          "wchar": 0,
+          "syscr": 8,
+          "syscw": 0,
+          "read_bytes": 20480,
+          "write_bytes": 0,
+          "cancelled_write_bytes": 0
+        }
+      }
+    ],
+    "observer": "100ms proc snapshots; worker/server separately, page cache excluded"
+  },
+  "candidate-ab901e3": {
+    "sampled_peak_total_rss_kib": 399260,
+    "sampled_peak_server_rss_kib": 399260,
+    "sampled_peak_worker_rss_kib": 123520,
+    "observed_server_vmhwm_kib": 401272,
+    "observed_worker_vmhwm_kib": 123520,
+    "workers_observed": 4,
+    "io_by_process": [
+      {
+        "role": "server",
+        "last": {
+          "rchar": 114224822419,
+          "wchar": 12495390501,
+          "syscr": 27973922,
+          "syscw": 3108677,
+          "read_bytes": 42037321728,
+          "write_bytes": 10309996544,
+          "cancelled_write_bytes": 0
+        },
+        "first": {
+          "rchar": 5840,
+          "wchar": 0,
+          "syscr": 13,
+          "syscw": 0,
+          "read_bytes": 663552,
+          "write_bytes": 0,
+          "cancelled_write_bytes": 0
+        }
+      },
+      {
+        "role": "worker",
+        "last": {
+          "rchar": 9580703117,
+          "wchar": 47126270,
+          "syscr": 2333338,
+          "syscw": 4,
+          "read_bytes": 6070398976,
+          "write_bytes": 47144960,
+          "cancelled_write_bytes": 0
+        },
+        "first": {
+          "rchar": 16115,
+          "wchar": 8,
+          "syscr": 33,
+          "syscw": 1,
+          "read_bytes": 45113344,
+          "write_bytes": 28049408,
+          "cancelled_write_bytes": 0
+        }
+      },
+      {
+        "role": "worker",
+        "last": {
+          "rchar": 9577356614,
+          "wchar": 47126262,
+          "syscr": 2332520,
+          "syscw": 3,
+          "read_bytes": 1313796096,
+          "write_bytes": 47128576,
+          "cancelled_write_bytes": 0
+        },
+        "first": {
+          "rchar": 37904566,
+          "wchar": 47126254,
+          "syscr": 4660,
+          "syscw": 2,
+          "read_bytes": 6111232,
+          "write_bytes": 47128576,
+          "cancelled_write_bytes": 0
+        }
+      },
+      {
+        "role": "worker",
+        "last": {
+          "rchar": 209808541,
+          "wchar": 47126254,
+          "syscr": 45518,
+          "syscw": 2,
+          "read_bytes": 165502976,
+          "write_bytes": 47128576,
+          "cancelled_write_bytes": 0
+        },
+        "first": {
+          "rchar": 47146179,
+          "wchar": 47126254,
+          "syscr": 5793,
+          "syscw": 2,
+          "read_bytes": 0,
+          "write_bytes": 47128576,
+          "cancelled_write_bytes": 0
+        }
+      },
+      {
+        "role": "worker",
+        "last": {
+          "rchar": 1035017360,
+          "wchar": 47126246,
+          "syscr": 246985,
+          "syscw": 1,
+          "read_bytes": 303558656,
+          "write_bytes": 47128576,
+          "cancelled_write_bytes": 0
+        },
+        "first": {
+          "rchar": 15975,
+          "wchar": 0,
+          "syscr": 32,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 262144,
+          "cancelled_write_bytes": 0
+        }
+      }
+    ],
+    "observer": "100ms proc snapshots; worker/server separately, page cache excluded"
+  }
+}

@@ -1,0 +1,203 @@
+.dashboard-container {
+  padding: 32px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.dashboard-container > :last-child {
+  margin-bottom: 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.row-50-50 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+  height: 380px;
+}
+
+.row-3-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+  height: 420px;
+}
+
+.row-2x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.row-2x2 > .card {
+  min-height: 260px;
+}
+
+/* Custom overrides card */
+.override-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.override-row:last-child {
+  border-bottom: none;
+}
+.override-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--text-main);
+}
+.override-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.override-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.row-2-col {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+  height: 340px;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+/* Chart loading indicator */
+.chart-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 200px;
+}
+
+.loading-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted, #71717a);
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+/* ApexCharts tooltip overrides — force dark bg + readable text */
+.apexcharts-tooltip {
+  background: #09090b !important;
+  border: 1px solid #27272a !important;
+  color: #f4f4f5 !important;
+}
+.apexcharts-tooltip .apexcharts-tooltip-title {
+  background: #18181b !important;
+  border-bottom: 1px solid #27272a !important;
+  color: #f4f4f5 !important;
+}
+.apexcharts-tooltip .apexcharts-tooltip-text,
+.apexcharts-tooltip .apexcharts-tooltip-text-y-label,
+.apexcharts-tooltip .apexcharts-tooltip-text-y-value,
+.apexcharts-tooltip .apexcharts-tooltip-text-goals-label,
+.apexcharts-tooltip .apexcharts-tooltip-text-goals-value,
+.apexcharts-tooltip .apexcharts-tooltip-text-z-label,
+.apexcharts-tooltip .apexcharts-tooltip-text-z-value {
+  color: #f4f4f5 !important;
+}
+.apexcharts-tooltip-series-group {
+  background: transparent !important;
+}
+.apexcharts-xaxistooltip {
+  background: #09090b !important;
+  border: 1px solid #27272a !important;
+  color: #f4f4f5 !important;
+}
+.apexcharts-xaxistooltip-text {
+  color: #f4f4f5 !important;
+}
+
+/* ApexCharts' axis and donut labels need explicit text tokens on dark cards. */
+.dashboard-container .apexcharts-yaxis-title text,
+.dashboard-container .apexcharts-xaxis-title text,
+.dashboard-container .apexcharts-datalabel-label {
+  fill: var(--text-main) !important;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-container .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .dashboard-container .row-50-50,
+  .dashboard-container .row-3-col,
+  .dashboard-container .row-2x2,
+  .dashboard-container .row-2-col {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+  .dashboard-container .row-50-50 > .card,
+  .dashboard-container .row-3-col > .card,
+  .dashboard-container .row-2-col > .card {
+    min-height: 380px;
+  }
+}
+@media (max-width: 700px) {
+  .dashboard-container {
+    padding: var(--space-md);
+  }
+  .dashboard-container .card,
+  .dashboard-container .stat-card {
+    padding: var(--space-md);
+  }
+  .dashboard-container .card-header {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+}
+
+/* Reserve space for stale-result status inside the existing chart card. */
+.chart-stale-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.chart-stale-warning {
+  flex: 0 0 auto;
+  margin: 0 0 8px;
+}
+
+.chart-stale-content {
+  flex: 1 1 0;
+  min-height: 0;
+}

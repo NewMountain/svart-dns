@@ -1,0 +1,9 @@
+3b27ca44ae8f2402c06bd9f67e0a1f072a26d6be271ed2e511b84767e9271936  /root/svart-base
+8beff57eafe3788f22166ae1309c700a2fd17c1132832735f1aea2f77b0e5ca3  /root/svart-final-bookworm
+5758a4bed57c482035f3bf6bd5302553230f4482c7ca71fc17cfce9c2601f76d  /root/bench/bin/dnsbench
+1f74ef3e55181cd4110cb9d5efe9df11313ef967856186a359f067c3be1676aa  /root/bench/bin/stubupstream
+8e9666f1b57855bd3d476a8ce9d6858686bf5c328be9eb4772152cb73e250208  /root/lists/hagezi-pro.txt
+69a5cbafc91466bc6ac6f9669adedb97af5beaf1dfb51dace81bda841785d3e3  /root/lists/hagezi-tif.txt
+413135605ddaeca8ec3b9ca8638b5d1ff6fdbe05660ed9d3a7be70b30345e722  /root/lists/hagezi-ultimate.txt
+8f97080852ccd2a2f841e9ae66f941f76d9962c02542266349c676390c9e5160  /root/lists/oisd-big.txt
+bda78e713e086e774111165455e530daea712a6042152a3b47de22ded3ec3a5a  /root/lists/stevenblack.txt

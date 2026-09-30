@@ -1,373 +1,110 @@
 package main
 
 import (
-	"bufio"
 	"database/sql"
-	"encoding/json"
-	"fmt"
-	"log"
 	"net/http"
 	"strings"
-	"sync"
-	"sync/atomic"
-	"time"
 
 	"github.com/miekg/dns"
 )
 
 type Blocklist struct {
-	ID          int    `json:"id"`
-	URL         string `json:"url"`
-	Alias       string `json:"alias"`
-	Enabled     bool   `json:"enabled"`
-	DomainCount int    `json:"domain_count"`
-	LastUpdated string `json:"last_updated"`
+	ID              int    `json:"id"`
+	URL             string `json:"url"`
+	Alias           string `json:"alias"`
+	Enabled         bool   `json:"enabled"`
+	DomainCount     int    `json:"domain_count"`
+	LastUpdated     string `json:"last_updated"`
+	RefreshInterval int    `json:"refresh_interval"`
 }
 
-type blocklistStore struct {
-	clientDomains atomic.Value
-	blockCache    sync.Map
-}
-
-var blocklistStorage = &blocklistStore{}
-
-func init() {
-	blocklistStorage.clientDomains.Store(make(map[string]map[string]bool))
-}
-
-type blocklistDomainsStore struct {
-	domains atomic.Value
-}
-
-var allBlocklistDomains = &blocklistDomainsStore{}
-
-func init() {
-	allBlocklistDomains.domains.Store(make(map[int]map[string]bool))
-}
-
-func loadBlocklistsFromDB() error {
-	clientDomains := make(map[string]map[string]bool)
-	blocklistDomains := make(map[int]map[string]bool)
-
-	blRows, err := db.Query("SELECT id FROM blocklists WHERE enabled = 1")
-	if err != nil {
-		return err
-	}
-	var enabledBlocklists []int
-	for blRows.Next() {
-		var id int
-		blRows.Scan(&id)
-		enabledBlocklists = append(enabledBlocklists, id)
-	}
-	blRows.Close()
-
-	for _, blID := range enabledBlocklists {
-		domains := make(map[string]bool)
-		domainRows, err := db.Query("SELECT domain FROM blocked_domains WHERE blocklist_id = ?", blID)
-		if err != nil {
-			continue
-		}
-		for domainRows.Next() {
-			var domain string
-			domainRows.Scan(&domain)
-			domains[domain] = true
-		}
-		domainRows.Close()
-		blocklistDomains[blID] = domains
-	}
-
-	rows, err := db.Query(`
-		SELECT DISTINCT ql.client_ip 
-		FROM query_logs ql
-	`)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	var clients []string
-	for rows.Next() {
-		var ip string
-		rows.Scan(&ip)
-		clients = append(clients, ip)
-	}
-
-	for _, clientIP := range clients {
-		domains := make(map[string]bool)
-
-		blocklistIDs, err := getBlocklistsForClient(clientIP)
-		if err != nil {
-			continue
-		}
-
-		for _, blocklistID := range blocklistIDs {
-			for domain := range blocklistDomains[blocklistID] {
-				domains[domain] = true
-			}
-		}
-
-		if len(domains) > 0 {
-			clientDomains[clientIP] = domains
-		}
-	}
-
-	allBlocklistDomains.domains.Store(blocklistDomains)
-	blocklistStorage.clientDomains.Store(clientDomains)
-	blocklistStorage.blockCache.Range(func(key, value interface{}) bool {
-		blocklistStorage.blockCache.Delete(key)
-		return true
-	})
-	log.Printf("Loaded blocklists for %d clients, %d blocklists (cache cleared)", len(clientDomains), len(blocklistDomains))
-	return nil
-}
-
-func getBlocklistsForClient(clientIP string) ([]int, error) {
-	var blocklistIDs []int
-
-	rows, err := db.Query("SELECT blocklist_id FROM client_blocklists WHERE client_ip = ?", clientIP)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var id int
-		rows.Scan(&id)
-		blocklistIDs = append(blocklistIDs, id)
-	}
-
-	groupRows, err := db.Query(`
-		SELECT gb.blocklist_id 
-		FROM group_blocklists gb
-		JOIN client_group_members cgm ON gb.group_id = cgm.group_id
-		WHERE cgm.client_ip = ?
-		AND gb.blocklist_id NOT IN (SELECT blocklist_id FROM client_blocklists WHERE client_ip = ?)
-	`, clientIP, clientIP)
-	if err != nil {
-		return blocklistIDs, nil
-	}
-	defer groupRows.Close()
-
-	for groupRows.Next() {
-		var id int
-		groupRows.Scan(&id)
-		blocklistIDs = append(blocklistIDs, id)
-	}
-
-	return blocklistIDs, nil
-}
-
+// isBlockedForClient is a backward-compatible wrapper around evaluatePolicy.
+// It returns true if the cascading policy engine decides to block.
 func isBlockedForClient(clientIP, domain string) bool {
-	domain = strings.ToLower(strings.TrimSuffix(domain, "."))
-	cacheKey := clientIP + ":" + domain
-
-	if cached, ok := blocklistStorage.blockCache.Load(cacheKey); ok {
-		return cached.(bool)
-	}
-
-	allClientDomains := blocklistStorage.clientDomains.Load().(map[string]map[string]bool)
-	domains, exists := allClientDomains[clientIP]
-
-	if !exists || len(domains) == 0 {
-		blocklistStorage.blockCache.Store(cacheKey, false)
-		return false
-	}
-
-	if domains[domain] {
-		blocklistStorage.blockCache.Store(cacheKey, true)
-		return true
-	}
-
-	if strings.HasSuffix(domain, ".in-addr.arpa") {
-		ip := reverseARPAToIP(domain)
-		if ip != "" && domains[ip] {
-			blocklistStorage.blockCache.Store(cacheKey, true)
-			return true
-		}
-	}
-
-	parts := strings.Split(domain, ".")
-	for i := range parts {
-		subdomain := strings.Join(parts[i:], ".")
-		if domains[subdomain] {
-			blocklistStorage.blockCache.Store(cacheKey, true)
-			return true
-		}
-	}
-
-	for pattern := range domains {
-		if matchWildcard(pattern, domain) {
-			blocklistStorage.blockCache.Store(cacheKey, true)
-			return true
-		}
-	}
-
-	blocklistStorage.blockCache.Store(cacheKey, false)
-	return false
+	return evaluatePolicy(clientIP, domain, 1).Result == "block"
 }
 
-func reverseARPAToIP(arpa string) string {
-	arpa = strings.TrimSuffix(arpa, ".in-addr.arpa")
-	parts := strings.Split(arpa, ".")
-	if len(parts) != 4 {
-		return ""
-	}
-	return parts[3] + "." + parts[2] + "." + parts[1] + "." + parts[0]
-}
-
-func isResponseBlockedByIP(clientIP string, resp *dns.Msg) bool {
-	allClientDomains := blocklistStorage.clientDomains.Load().(map[string]map[string]bool)
-	domains, exists := allClientDomains[clientIP]
-
-	if !exists || len(domains) == 0 {
-		return false
-	}
-
+// extractResponseIPs pulls the resolved A/AAAA addresses out of a DNS response.
+func extractResponseIPs(resp *dns.Msg) []string {
+	var ips []string
 	for _, answer := range resp.Answer {
 		switch rr := answer.(type) {
 		case *dns.A:
-			ip := rr.A.String()
-			if domains[ip] {
-				return true
-			}
+			ips = append(ips, rr.A.String())
 		case *dns.AAAA:
-			ip := rr.AAAA.String()
-			if domains[ip] {
-				return true
-			}
+			ips = append(ips, rr.AAAA.String())
 		}
 	}
-
-	return false
+	return ips
 }
 
-func matchWildcard(pattern, domain string) bool {
-	if !strings.Contains(pattern, "*") {
-		return false
-	}
-
-	patternParts := strings.Split(pattern, "*")
-
-	if len(patternParts) == 0 {
-		return true
-	}
-
-	if patternParts[0] != "" && !strings.HasPrefix(domain, patternParts[0]) {
-		return false
-	}
-
-	if patternParts[len(patternParts)-1] != "" && !strings.HasSuffix(domain, patternParts[len(patternParts)-1]) {
-		return false
-	}
-
-	currentPos := 0
-	for i, part := range patternParts {
-		if part == "" {
-			continue
-		}
-
-		if i == 0 {
-			currentPos = len(part)
-			continue
-		}
-
-		idx := strings.Index(domain[currentPos:], part)
-		if idx == -1 {
-			return false
-		}
-		currentPos += idx + len(part)
-	}
-
-	return true
-}
-
-func handleBlocklists(w http.ResponseWriter, r *http.Request) {
-	rows, err := db.Query("SELECT id, url, alias, enabled, domain_count, last_updated FROM blocklists ORDER BY id")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-
-	var blocklists []Blocklist
-	for rows.Next() {
-		var b Blocklist
-		var lastUpdated sql.NullString
-		rows.Scan(&b.ID, &b.URL, &b.Alias, &b.Enabled, &b.DomainCount, &lastUpdated)
-
-		if lastUpdated.Valid && lastUpdated.String != "" {
-			t, err := time.Parse("2006-01-02 15:04:05", lastUpdated.String)
-			if err != nil {
-				t, err = time.Parse(time.RFC3339, lastUpdated.String)
-			}
-			if err == nil {
-				b.LastUpdated = t.Format("Jan 2 15:04")
-			} else {
-				b.LastUpdated = "Never"
-			}
-		} else {
-			b.LastUpdated = "Never"
-		}
-
-		blocklists = append(blocklists, b)
-	}
-
-	data := map[string]interface{}{
-		"Blocklists": blocklists,
-	}
-	renderPage(w, "Blocklists", "blocklists", blocklistsHTML, data)
-}
-
+// handleAPIBlocklists godoc
+// @Summary Create a blocklist
+// @Description Creates a new blocklist with a URL and alias, then triggers an async fetch of the blocklist domains
+// @Tags Blocklists
+// @Security ApiKeyAuth
+// @Accept json
+// @Produce json
+// @Param blocklist body object true "Blocklist with 'url', 'alias', and 'enabled' fields"
+// @Success 201 {object} apiResponse
+// @Failure 400 {object} apiResponse
+// @Failure 401 {object} apiResponse
+// @Failure 403 {object} apiResponse
+// @Failure 500 {object} apiResponse
+// @Router /api/blocklists [post]
 func handleAPIBlocklists(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	if r.Method != "POST" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Method not allowed"})
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
-	var req struct {
-		URL     string `json:"url"`
-		Alias   string `json:"alias"`
-		Enabled bool   `json:"enabled"`
+	var req CreateBlocklistRequest
+	if !decodeJSONBody(w, r, maxSmallAdminRequestBodyBytes, &req) {
+		return
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+	if !validateListURLForAPI(w, req.URL) {
 		return
 	}
 
-	result, err := db.Exec("INSERT INTO blocklists (url, alias, enabled) VALUES (?, ?, ?)", req.URL, req.Alias, req.Enabled)
+	refreshInterval := 604800 // default: 7 days
+	if req.RefreshInterval != nil {
+		refreshInterval = *req.RefreshInterval
+	}
+
+	ts, nid := syncNow()
+	result, err := execPolicyWrite("INSERT INTO blocklists (url, alias, enabled, refresh_interval, updated_at, node_id) VALUES (?, ?, ?, ?, ?, ?)", req.URL, req.Alias, req.Enabled, refreshInterval, ts, nid)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+		writeDBError(w, err)
 		return
 	}
 
-	id, _ := result.LastInsertId()
+	id, err := result.LastInsertId()
+	if err != nil {
+		writeDBError(w, err)
+		return
+	}
 
 	go func() {
 		if err := refreshBlocklistByID(int(id)); err != nil {
-			log.Printf("Failed to fetch blocklist %d: %v", id, err)
+			logBlocklist.Error("failed to fetch blocklist", "id", id, "error", err)
 		}
 	}()
 
-	json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "id": id})
+	writeJSON(w, http.StatusCreated, CreateBlocklistResponse{ID: id, Alias: req.Alias})
 }
 
 func handleAPIBlocklistAction(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	path := r.URL.Path[len("/api/blocklists/"):]
 	parts := strings.Split(path, "/")
 	if len(parts) == 0 {
-		http.Error(w, "Invalid path", http.StatusBadRequest)
+		writeError(w, http.StatusBadRequest, "Invalid path")
 		return
 	}
 
-	var id int
-	fmt.Sscanf(parts[0], "%d", &id)
+	id, validID := parsePathID(w, parts[0])
+	if !validID {
+		return
+	}
 
 	action := ""
 	if len(parts) > 1 {
@@ -375,164 +112,322 @@ func handleAPIBlocklistAction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch r.Method {
-	case "DELETE":
-		_, err := db.Exec("DELETE FROM blocklists WHERE id = ?", id)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+	case "GET":
+		if action == "compatibility" {
+			handleAPIListCompatibility(w, r, "blocklist", id)
 			return
 		}
-		loadBlocklistsFromDB()
-		json.NewEncoder(w).Encode(map[string]bool{"success": true})
-
-	case "POST":
-		if action == "toggle" {
-			_, err := db.Exec("UPDATE blocklists SET enabled = NOT enabled WHERE id = ?", id)
+		if action == "domains" {
+			search := r.URL.Query().Get("search")
+			limit, offset, err := pageParams(r.URL.Query(), 1000, 10000)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				writeError(w, http.StatusBadRequest, err.Error())
 				return
 			}
-			loadBlocklistsFromDB()
-			json.NewEncoder(w).Encode(map[string]bool{"success": true})
-		} else if action == "refresh" {
+
+			var total int
+			var rows *sql.Rows
+			if search != "" {
+				// #nosec G202 G701 -- Source-text projection is fixed SQL; request values remain bound parameters.
+				if err := readDB.QueryRow("SELECT COUNT(*) FROM blocked_domains WHERE blocklist_id = ? AND ("+storedRuleTextSQL+") LIKE '%' || ? || '%'", id, search).Scan(&total); err != nil {
+					writeDBError(w, err)
+					return
+				}
+				// #nosec G202 G701 -- Source-text projection is fixed SQL; request values remain bound parameters.
+				rows, err = readDB.Query("SELECT domain FROM blocked_domains WHERE blocklist_id = ? AND ("+storedRuleTextSQL+") LIKE '%' || ? || '%' ORDER BY "+storedRuleTextSQL+",domain LIMIT ? OFFSET ?", id, search, limit, offset)
+			} else {
+				if err := readDB.QueryRow("SELECT COUNT(*) FROM blocked_domains WHERE blocklist_id = ?", id).Scan(&total); err != nil {
+					writeDBError(w, err)
+					return
+				}
+				// #nosec G202 G701 -- Source-text projection is fixed SQL; request values remain bound parameters.
+				rows, err = readDB.Query("SELECT domain FROM blocked_domains WHERE blocklist_id = ? ORDER BY "+storedRuleTextSQL+",domain LIMIT ? OFFSET ?", id, limit, offset)
+			}
+			if err != nil {
+				writeDBError(w, err)
+				return
+			}
+			defer closeQueryRows(rows)
+
+			var domains []string
+			for rows.Next() {
+				var d string
+				if err := rows.Scan(&d); err != nil {
+					writeDBError(w, err)
+					return
+				}
+				text, err := storedRuleDisplayText(d)
+				if err != nil {
+					writeDBError(w, err)
+					return
+				}
+				domains = append(domains, text)
+			}
+			if err := rows.Err(); err != nil {
+				writeDBError(w, err)
+				return
+			}
+			if domains == nil {
+				domains = []string{}
+			}
+			writeJSON(w, http.StatusOK, BlocklistDomainsPage{BlocklistID: id, Domains: domains, Total: total, Limit: limit, Offset: offset})
+			return
+		}
+		writeError(w, http.StatusBadRequest, "Invalid action")
+
+	case "DELETE":
+		err := deleteLocalEntity("blocklists", id, snapshotPolicy)
+		if err != nil {
+			writeDBError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
+
+	case "POST":
+		switch action {
+		case "toggle":
+			ts, nid := syncNow()
+			_, err := execPolicyWrite("UPDATE blocklists SET enabled = NOT enabled, updated_at = ?, node_id = ? WHERE id = ?", ts, nid, id)
+			if err != nil {
+				writeDBError(w, err)
+				return
+			}
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
+		case "refresh":
 			go func() {
 				if err := refreshBlocklistByID(id); err != nil {
-					log.Printf("Failed to refresh blocklist %d: %v", id, err)
+					logBlocklist.Error("failed to refresh blocklist", "id", id, "error", err)
 				}
 			}()
-			json.NewEncoder(w).Encode(map[string]bool{"success": true})
-		} else {
-			http.Error(w, "Invalid action", http.StatusBadRequest)
+			writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
+		default:
+			writeError(w, http.StatusBadRequest, "Invalid action")
 		}
 
 	case "PUT":
-		var req struct {
-			URL   string `json:"url"`
-			Alias string `json:"alias"`
+		var req UpdateBlocklistRequest
+		if !decodeJSONBody(w, r, maxSmallAdminRequestBodyBytes, &req) {
+			return
 		}
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+		if !validateListURLForAPI(w, req.URL) {
 			return
 		}
 
-		if req.URL != "" {
-			db.Exec("UPDATE blocklists SET url = ? WHERE id = ?", req.URL, id)
+		err := localMutation(snapshotPolicy, func(tx *sql.Tx) error {
+			ts, nid := syncNow()
+			if req.URL != "" {
+				res, err := tx.Exec("UPDATE blocklists SET url=?,updated_at=?,node_id=? WHERE id=?", req.URL, ts, nid, id)
+				if err := checkListWrite(res, err, 1); err != nil {
+					return err
+				}
+			}
+			if req.Alias != "" {
+				if err := renameEntityTx(tx, "blocklists", id, req.Alias); err != nil {
+					return err
+				}
+			}
+			if req.RefreshInterval != nil {
+				res, err := tx.Exec("UPDATE blocklists SET refresh_interval=?,updated_at=?,node_id=? WHERE id=?", *req.RefreshInterval, ts, nid, id)
+				if err := checkListWrite(res, err, 1); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			writeDBError(w, err)
+			return
 		}
-		if req.Alias != "" {
-			db.Exec("UPDATE blocklists SET alias = ? WHERE id = ?", req.Alias, id)
-		}
-
-		json.NewEncoder(w).Encode(map[string]bool{"success": true})
+		writeJSON(w, http.StatusOK, SuccessResponse{Success: true})
 
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
 }
 
 func refreshBlocklistByID(id int) error {
-	var url string
-	err := db.QueryRow("SELECT url FROM blocklists WHERE id = ?", id).Scan(&url)
-	if err != nil {
-		return err
-	}
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("HTTP %d", resp.StatusCode)
-	}
-
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	tx.Exec("DELETE FROM blocked_domains WHERE blocklist_id = ?", id)
-
-	scanner := bufio.NewScanner(resp.Body)
-	count := 0
-
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-
-		if line == "" || strings.HasPrefix(line, "!") || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		if strings.HasPrefix(line, "@@") {
-			continue
-		}
-
-		if strings.HasPrefix(line, "/") && strings.HasSuffix(line, "/") {
-			continue
-		}
-
-		if strings.Contains(line, "$") {
-			continue
-		}
-
-		domain := parseDomain(line)
-		if domain == "" {
-			continue
-		}
-
-		tx.Exec("INSERT INTO blocked_domains (blocklist_id, domain) VALUES (?, ?)", id, domain)
-		count++
-	}
-
-	tx.Exec("UPDATE blocklists SET domain_count = ?, last_updated = CURRENT_TIMESTAMP WHERE id = ?", count, id)
-
-	if err := tx.Commit(); err != nil {
-		return err
-	}
-
-	log.Printf("Refreshed blocklist %d: %d domains", id, count)
-
-	loadBlocklistsFromDB()
-
-	return nil
+	return refreshListByID(blockListStore, id)
 }
 
-func parseDomain(line string) string {
-	line = strings.TrimSpace(line)
+// --- Manual blocklist helpers (mirrors allowlist.go) ---
 
-	if strings.HasPrefix(line, "127.0.0.1") || strings.HasPrefix(line, "0.0.0.0") {
-		parts := strings.Fields(line)
-		if len(parts) >= 2 {
-			line = parts[1]
-		} else {
-			return ""
+// getOrCreateManualBlocklist returns the manual (url=”) blocklist for a client,
+// creating it if it doesn't exist.
+func getOrCreateManualBlocklist(clientIP string) (int64, error) {
+	return getOrCreateManualList(blockListStore, manualClient, clientIP)
+}
+
+// getOrCreateGroupManualBlocklist returns the manual blocklist for a group.
+func getOrCreateGroupManualBlocklist(groupID int) (int64, error) {
+	return getOrCreateManualList(blockListStore, manualGroup, groupID)
+}
+
+// --- Conflict detection ---
+
+// domainConflicts checks whether newDomain overlaps with any existing domain.
+// Overlap means one covers the other: exact match, subdomain relationship, or
+// wildcard pattern covering a domain. Returns the conflicting domain if found.
+func domainConflicts(existingDomains []string, newDomain string) (bool, string) {
+	newLower := strings.ToLower(newDomain)
+	for _, existing := range existingDomains {
+		existLower := strings.ToLower(existing)
+
+		// 1. Exact match
+		if newLower == existLower {
+			return true, existing
+		}
+
+		// 2. New is subdomain of existing (existing covers new)
+		if isSubdomainOf(newLower, existLower) {
+			return true, existing
+		}
+
+		// 3. Existing is subdomain of new (new covers existing)
+		if isSubdomainOf(existLower, newLower) {
+			return true, existing
+		}
+
+		// 4. Wildcard: existing *.X covers new Y.X
+		if strings.HasPrefix(existLower, "*.") {
+			suffix := existLower[2:]
+			if newLower == suffix || strings.HasSuffix(newLower, "."+suffix) {
+				return true, existing
+			}
+		}
+
+		// 5. Wildcard: new *.X covers existing Y.X
+		if strings.HasPrefix(newLower, "*.") {
+			suffix := newLower[2:]
+			if existLower == suffix || strings.HasSuffix(existLower, "."+suffix) {
+				return true, existing
+			}
 		}
 	}
+	return false, ""
+}
 
-	if strings.Contains(line, "$") {
-		line = strings.Split(line, "$")[0]
+// isSubdomainOf returns true if child is a subdomain of parent.
+// e.g. "app.tiktok.com" is a subdomain of "tiktok.com".
+func isSubdomainOf(child, parent string) bool {
+	return len(child) > len(parent)+1 && strings.HasSuffix(child, "."+parent)
+}
+
+// getManualBlockDomainsForClient returns all custom block domains for a client.
+func getManualBlockDomainsForClient(clientIP string) ([]string, error) {
+	rows, err := db.Query(`
+		SELECT bd.domain FROM blocked_domains bd
+		JOIN blocklists b ON bd.blocklist_id = b.id
+		JOIN client_blocklists cb ON b.id = cb.blocklist_id
+		WHERE cb.client_ip = ? AND b.url = ''
+	`, clientIP)
+	if err != nil {
+		return nil, err
 	}
+	defer closeQueryRows(rows)
 
-	if strings.HasPrefix(line, "||") {
-		line = strings.TrimPrefix(line, "||")
-		line = strings.TrimSuffix(line, "|")
-		line = strings.TrimSuffix(line, "^")
-	} else if strings.HasPrefix(line, "|") {
-		line = strings.TrimPrefix(line, "|")
-		line = strings.TrimSuffix(line, "|")
-		line = strings.TrimSuffix(line, "^")
+	var domains []string
+	for rows.Next() {
+		var d string
+		if err := rows.Scan(&d); err != nil {
+			return nil, err
+		}
+		domains = append(domains, d)
 	}
-
-	if strings.Contains(line, "/") {
-		line = strings.Split(line, "/")[0]
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
+	return domains, nil
+}
 
-	line = strings.TrimSpace(line)
-	line = strings.ToLower(line)
-
-	if line == "" || strings.Contains(line, " ") {
-		return ""
+// getManualAllowDomainsForClient returns all custom allow domains for a client.
+func getManualAllowDomainsForClient(clientIP string) ([]string, error) {
+	rows, err := db.Query(`
+		SELECT ad.domain FROM allowed_domains ad
+		JOIN allowlists a ON ad.allowlist_id = a.id
+		JOIN client_allowlists ca ON a.id = ca.allowlist_id
+		WHERE ca.client_ip = ? AND a.url = ''
+	`, clientIP)
+	if err != nil {
+		return nil, err
 	}
+	defer closeQueryRows(rows)
 
-	return line
+	var domains []string
+	for rows.Next() {
+		var d string
+		if err := rows.Scan(&d); err != nil {
+			return nil, err
+		}
+		domains = append(domains, d)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return domains, nil
+}
+
+// getManualBlockDomainsForGroup returns all custom block domains for a group.
+func getManualBlockDomainsForGroup(groupID int) ([]string, error) {
+	rows, err := db.Query(`
+		SELECT bd.domain FROM blocked_domains bd
+		JOIN blocklists b ON bd.blocklist_id = b.id
+		JOIN group_blocklists gb ON b.id = gb.blocklist_id
+		WHERE gb.group_id = ? AND b.url = ''
+	`, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer closeQueryRows(rows)
+
+	var domains []string
+	for rows.Next() {
+		var d string
+		if err := rows.Scan(&d); err != nil {
+			return nil, err
+		}
+		domains = append(domains, d)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return domains, nil
+}
+
+// getManualAllowDomainsForGroup returns all custom allow domains for a group.
+func getManualAllowDomainsForGroup(groupID int) ([]string, error) {
+	rows, err := db.Query(`
+		SELECT ad.domain FROM allowed_domains ad
+		JOIN allowlists a ON ad.allowlist_id = a.id
+		JOIN group_allowlists ga ON a.id = ga.allowlist_id
+		WHERE ga.group_id = ? AND a.url = ''
+	`, groupID)
+	if err != nil {
+		return nil, err
+	}
+	defer closeQueryRows(rows)
+
+	var domains []string
+	for rows.Next() {
+		var d string
+		if err := rows.Scan(&d); err != nil {
+			return nil, err
+		}
+		domains = append(domains, d)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return domains, nil
+}
+
+// --- Block-domain handlers ---
+
+// handleAPIClientBlockDomain handles POST/DELETE for manual per-client domain blocks.
+func handleAPIClientBlockDomain(w http.ResponseWriter, r *http.Request, clientIP string, parts []string) {
+	handleManualRule(w, r, blockListStore, manualClient, clientIP, parts)
+}
+
+// handleAPIGroupBlockDomain handles POST/DELETE for manual per-group domain blocks.
+func handleAPIGroupBlockDomain(w http.ResponseWriter, r *http.Request, groupID int, parts []string) {
+	handleManualRule(w, r, blockListStore, manualGroup, groupID, parts)
 }

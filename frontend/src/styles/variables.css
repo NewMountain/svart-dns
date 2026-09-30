@@ -1,0 +1,70 @@
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/inter-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/inter-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/inter-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/inter-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-500.woff2') format('woff2');
+}
+
+:root {
+  --bg-void: #09090b;
+  --bg-page: #18181b;
+  --bg-card: #1f1f22;
+  --bg-hover: #27272a;
+  --bg-tooltip: #2c2c30;
+  --bg-detail: #131315;
+
+  --border: #27272a;
+  --border-hover: #3f3f46;
+
+  --text-main: #f4f4f5;
+  --text-muted: #71717a;
+
+  --red: #ff6188;
+  --orange: #fc9867;
+  --yellow: #ffd866;
+  --green: #a9dc76;
+  --blue: #78dce8;
+  --purple: #ab9df2;
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+}
