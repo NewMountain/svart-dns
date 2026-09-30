@@ -210,7 +210,7 @@ bench_svart() {
 	started=$(date +%s%N)
 	local bin=${SVART_BIN:-}
 	if [ -z "$bin" ]; then
-		(cd "$HERE/.." && go build -o "$WORK/svart-dns" .)
+		(cd "$HERE/.." && go build -o "$WORK/svart-dns" ./cmd/svart-dns)
 		bin=$WORK/svart-dns
 	fi
 	local api=http://127.0.0.1:41080 jar=$WORK/svart.jar

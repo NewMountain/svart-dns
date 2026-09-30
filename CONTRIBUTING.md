@@ -19,7 +19,7 @@ results from your hardware and pull requests are all welcome.
 2. Add tests with realistic data. A bug fix comes with a regression test that
    fails without the fix.
 3. Changes on the DNS path include before/after numbers from the benchmarks
-   (`go test -bench …` or `make bench-throughput`).
+   (`go test ./internal/svart -bench …` or `make bench-throughput`).
 4. Update the matching page under `docs/` in the same pull request. Significant
    design decisions get a record in `docs/decisions/`.
 5. Keep commits small and use conventional messages (`fix(dns): …`,

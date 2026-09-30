@@ -33,7 +33,7 @@ git -C "$INFRA_ROOT" rev-parse HEAD >"$EVIDENCE/infra-commit.txt"
 git -C "$root" diff >"$EVIDENCE/service.diff"
 git -C "$INFRA_ROOT" diff >"$EVIDENCE/infra.diff"
 (cd "$root/frontend" && npm ci --ignore-scripts --no-audit --no-fund && npm run build) >"$EVIDENCE/frontend.log" 2>&1
-(cd "$root" && go build -p 2 -o "$EVIDENCE/svart-dns" .) >"$EVIDENCE/build.log" 2>&1
+(cd "$root" && go build -p 2 -o "$EVIDENCE/svart-dns" ./cmd/svart-dns) >"$EVIDENCE/build.log" 2>&1
 go version -m "$EVIDENCE/svart-dns" >"$EVIDENCE/build-provenance.txt"
 sha256sum "$EVIDENCE/svart-dns" >"$EVIDENCE/binary.sha256"
 ldd "$EVIDENCE/svart-dns" >"$EVIDENCE/runtime-linkage.txt"

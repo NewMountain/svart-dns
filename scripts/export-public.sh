@@ -49,7 +49,7 @@ node scripts/check-public-secrets.mjs "$EVIDENCE/gitleaks-all.json" "$DEST" >"$E
 node scripts/check-licenses.mjs frontend/package-lock.json >"$EVIDENCE/licenses.log" 2>&1
 node scripts/check-doc-links.mjs >"$EVIDENCE/doc-links.log" 2>&1
 make verify >"$EVIDENCE/verify.log" 2>&1
-go build -trimpath -o "$EVIDENCE/svart-dns" . >"$EVIDENCE/build.log" 2>&1
+go build -trimpath -o "$EVIDENCE/svart-dns" ./cmd/svart-dns >"$EVIDENCE/build.log" 2>&1
 # Build outputs stay ignored or outside the candidate. Never absorb generated
 # content or a gate's source mutation into the initial commit.
 git diff --exit-code >"$EVIDENCE/source-after-checks.diff"

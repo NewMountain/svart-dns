@@ -51,9 +51,10 @@ embedded in the binary. Start with [docs/overview.md](docs/overview.md) and
 
 ## Deliberate exceptions
 
-- The application shell remains `package main`; pure list parsing, domain
+- The application package and its same-package tests live in `internal/svart`;
+  `cmd/svart-dns` is the executable entrypoint. Pure list parsing, domain
   matching and policy evaluation live in `internal/listparse` and
-  `internal/policycore`. Further shell decomposition is tracked in
+  `internal/policycore`. Further application decomposition is tracked in
   [docs/roadmap.md](docs/roadmap.md).
 - Row IDs are SQLite integer rowids. They never cross node boundaries: sync
   identifies rows by natural keys (alias, address, CIDR), so there is no

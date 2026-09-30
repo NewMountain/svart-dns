@@ -8,7 +8,7 @@ resource use, limitations, and Raspberry Pi guidance.
 
 ```bash
 # Build before moving the binary to a compatible isolated Linux host.
-go build -o bin/svart-dns .
+go build -o bin/svart-dns ./cmd/svart-dns
 SERVER_CPUS=0-3 BENCH_CPUS=4-7 STUB_CPUS=8-9 \
   SVART_BIN="$PWD/bin/svart-dns" benchmarks/compare.sh /path/to/lists /path/to/results
 PROFILE_DIR=/path/to/footprint benchmarks/footprint.sh bin/svart-dns /path/to/lists

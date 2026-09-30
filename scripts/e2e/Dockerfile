@@ -18,7 +18,7 @@ ARG SOURCE_REVISION=development
 ENV SVART_E2E_REVISION=${SOURCE_REVISION}
 LABEL org.opencontainers.image.revision=${SOURCE_REVISION}
 RUN mkdir /evidence && chmod 1777 /evidence
-RUN --mount=type=cache,target=/root/.cache/go-build npm --prefix frontend run build && go build -o /usr/local/bin/svart-dns .
+RUN --mount=type=cache,target=/root/.cache/go-build npm --prefix frontend run build && go build -o /usr/local/bin/svart-dns ./cmd/svart-dns
 RUN frontend/node_modules/.bin/esbuild scripts/e2e/main.ts --bundle --platform=node --format=esm --packages=external --outfile=scripts/e2e/main.mjs
 ENV SVART_E2E_BINARY=/usr/local/bin/svart-dns SVART_E2E_CHROMIUM=/usr/bin/chromium SVART_E2E_OUTPUT=/evidence
 CMD ["node", "scripts/e2e/main.mjs"]

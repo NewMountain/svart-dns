@@ -168,53 +168,42 @@ inside of this tool. That's something I push onto
 OpnSense or Ubiquiti depending on who the router is and that works
 fine for now.
 
-## Why this exists (and why it's not "just another DNS sinkhole")
+## Turning the motivation into useful workflows
 
-These are real moments from running svart-dns in production that illustrate
-why this tool exists and what makes it different from Pi-hole and AdGuard Home.
+The founding notes above describe why Svart was built and the author's goals;
+they are not a complete feature comparison or a promise of every proposed capability.
+The current workflows are described in the [README](../README.md) and
+[Overview](overview.md).
 
-### "My phone emits a disgusting amount of telemetry"
+### Compare stricter lists against your own traffic
 
-Within minutes of the production cutover, the Logs page revealed how much
-telemetry an iPhone produces. Dozens of `*.apple.com` subdomains constantly
-phoning home. Most blocklists whitelist all of `*.apple.com` because blocking
-the wrong subdomain breaks iCloud, iMessage, and FaceTime. svart-dns makes
-this visible — you can see exactly which Apple domains are telemetry vs
-functional, and surgically block the telemetry without bricking your phone.
-Pi-hole and AdGuard show you a number. svart-dns shows you the full picture.
+A block percentage alone does not explain what a stronger list would change.
+Analysis shows which downloaded lists match a set of domains, including the
+matching rules. Load recent domains observed on the network or one client,
+or paste examples, and compare the lists before assigning them. This is list
+matching against observed domains, not a complete replay of hypothetical policy.
+The Policy Simulator explains the client's current range/group/device cascade.
 
-### "Something on my phone is dialing Quad9, trying to avoid my DNS"
+### Give different devices the right policy
 
-While running the Policy Simulator against iPhone traffic, a device was
-caught making direct DNS queries to 9.9.9.9, bypassing the network's DNS
-entirely. This is exactly the IoT/device bypass problem the vision describes —
-devices silently routing around your DNS to avoid blocking. svart-dns's
-per-client traffic visibility made this immediately obvious. In Pi-hole,
-this device would be completely invisible.
+Apply a baseline to a source-IP subnet, shared rules to a group, and an exception
+to an individual client IP. A device decision overrides its group, which overrides
+the range. That supports stricter server rules and different work/family policies
+without requiring a separate DNS server for each group. Pi-hole and AdGuard Home
+also have per-client controls; Svart's focus is this explicit cascade together
+with traffic-based list comparison and investigation.
 
-### "I can dial myself up to enhanced and not mess with the rest of the family"
+### Explain and investigate queries that reach Svart
 
-The three-tier policy cascade in action. Apply Hagezi Pro++ to your own IP,
-keep the family on the safe baseline. If something breaks for you, nobody
-else notices. Run your traffic through the Policy Simulator first to see
-exactly what the aggressive list would block. Once you're confident, promote
-it up to the group or range level. This is the per-device policy
-experimentation that Pi-hole and AdGuard fundamentally cannot do.
+Logs include filtering decisions and matching rules. On Linux amd64, the
+Investigation interface provides read-only SQL across recent logs and archived
+history to explore device activity and unfamiliar domains. DNS traffic sent to
+another resolver is outside Svart's visibility; detecting or preventing bypass
+requires network controls or separate network telemetry.
 
-### "I have blocklist FOMO — this tool cures it"
+### Keep the resolver responsive
 
-The Analysis page (Matrix + Policy Simulator) answers the question that
-haunts every blocklist user: "am I blocking enough?" Load your actual
-traffic, run it against every available list, and see empirically what
-each one would do. No more guessing. No more "my block rate seems low,
-surely I'm missing something." You can compare Pro vs Pro++ against your
-real traffic and make an informed decision instead of a hopeful one.
-
-### "I absolutely love this visibility. I feel so much better already!"
-
-This is the core thesis. DNS has the unusual property of exposing a lot
-of gross stuff — telemetry, tracking, rogue IoT behavior, bypass attempts.
-Pi-hole and AdGuard minimize logging in the name of privacy. svart-dns
-goes the other direction: rich analytics to identify leaky devices, rogue
-IoT, and telemetry exfiltration. Privacy by distribution (spreading queries
-across encrypted providers), not by blindness.
+The query path uses in-memory policy snapshots and caches; list comparison and
+SQL investigation run on demand. The [benchmark evidence](benchmarks.md) records
+throughput, tail latency, logging, and memory tradeoffs. It does not establish
+universal parity or negligible overhead compared with other resolvers.

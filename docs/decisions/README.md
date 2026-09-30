@@ -55,3 +55,5 @@ Process notes:
 - [Core list compatibility](core-list-compatibility.md) — typed DNS rules, list-local priorities and complete diagnostics with preserved Assignments.
 
 - [Reader-first list storage](list-storage-reader-first.md) — qualify a compatible recovery reader before activating typed list writes.
+
+- [Application package layout](application-package-layout.md) — application code and same-package tests together, with a small executable entrypoint.

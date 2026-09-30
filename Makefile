@@ -91,7 +91,7 @@ test-api-clients: build-frontend
 	@set -eu; fixture_dir="$$(mktemp -d)"; \
 	trap 'rm -rf "$$fixture_dir"' EXIT; \
 	frontend/node_modules/.bin/esbuild testdata/api-client-contract.ts --bundle --platform=node --format=esm --outfile="$$fixture_dir/client.mjs" && \
-	SVART_REVIEW_CLIENT_SCRIPT="$$fixture_dir/client.mjs" go test -race . -run '^TestIndependentGeneratedClientsHTTPAndDNS$$' -count=1
+	SVART_REVIEW_CLIENT_SCRIPT="$$fixture_dir/client.mjs" go test -race ./internal/svart -run '^TestIndependentGeneratedClientsHTTPAndDNS$$' -count=1
 
 .PHONY: verify-frontend verify-public
 verify-frontend: build-frontend
@@ -104,7 +104,7 @@ verify: test-container-security check-api check-fmt verify-frontend lint-go test
 
 # Go binary (depends on frontend build)
 build: build-frontend
-	go build -o svart-dns
+	go build -o svart-dns ./cmd/svart-dns
 
 run: build
 	DB_PATH=$(CURDIR)/svart-dns.db ARCHIVE_PATH=$(CURDIR)/archives DNS_PORT=53 sudo -E ./svart-dns
@@ -131,10 +131,10 @@ docker-down:
 # The generator is checked in and uses the repository Go dependency versions.
 # Go embeds frontend/dist, so fresh checkouts need the real frontend build.
 docs: build-frontend
-	go test . -run '^TestGeneratedAPIContract$$' -update-api
+	go test ./internal/svart -run '^TestGeneratedAPIContract$$' -update-api
 
 check-api: build-frontend
-	go test . -run '^Test(APIContract|GeneratedAPIContract|PublicAPIDocumentation)'
+	go test ./internal/svart -run '^Test(APIContract|GeneratedAPIContract|PublicAPIDocumentation)'
 
 # Benchmarks (see benchmarks/README.md). Lists are downloaded once; runs are offline.
 BENCH_LISTS ?= benchmarks/lists

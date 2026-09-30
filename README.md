@@ -1,38 +1,42 @@
 # Svart DNS
 
-Svart is a self-hosted DNS sinkhole for people who want to understand and tune
-what their network blocks. It combines DNS filtering, per-device policy,
-filter-list comparison, and query-history investigation in one Go process with
-an embedded web UI. It forwards allowed queries to your chosen upstream
-resolvers; it does not perform recursive resolution itself.
+Svart is self-hosted DNS filtering built around two questions: **which stricter
+lists match your network's traffic, and which devices should those rules apply to?**
+
+It started with the frustration of using Pi-hole and wanting to block more,
+without knowing where stronger lists would start breaking things. A block
+percentage wasn't enough to make that decision. Svart brings list comparison
+and targeted policy controls into the same interface so you can make those
+choices using your own traffic.
+
+## Why Svart?
+
+- **Choose lists using your own traffic.** Compare downloaded, enabled lists
+  against recent network domains, one device's observed domains, or examples
+  you paste in. See which lists match each name and the rules responsible before
+  deciding what to assign.
+- **Give each network, group, or device the right policy.** Set a baseline for
+  a source-IP subnet, shared rules for your work machines or family, and
+  exceptions for one client. Device decisions override group decisions, which
+  override the range. Named policies make repeated assignments manageable.
+- **Understand a filtering decision.** Logs record matching rules, lists, and
+  policy tiers. The Policy Simulator explains how the *current* range/group/client
+  assignments resolve a batch of domains.
+- **Investigate beyond a dashboard.** On Linux amd64, run read-only SQL from
+  the Investigation UI across recent SQLite logs and older Parquet archives.
+  Explore which devices contact a domain and how their query patterns change.
+- **Fit DNS into your homelab.** Synchronize configuration across nodes,
+  manage local name-to-IP rewrites through the API, and use Prometheus metrics
+  and optional Loki query logs.
+
+Svart runs as one Go process with an embedded web UI. Allowed queries forward
+to your chosen UDP, TCP, DoT, or DoH upstreams, with weighted, random, or blended
+selection and domain-specific resolver routes.
 
 ![Svart dashboard with synthetic demo traffic](docs/images/dashboard.png)
 
 *Actual Svart UI with synthetic demo traffic. These values illustrate the UI,
 not benchmark results.*
-
-## What it does
-
-- **Filter Lists** manages blocklists and allowlists, automatic refreshes, and
-  refresh history. Hosts files, domain lists, wildcards, and a subset of
-  AdGuard/Adblock syntax are supported; see [Known limitations](#known-limitations).
-- **Assignments** applies lists and custom rules to IP ranges, groups, and
-  individual client IPs. A device-specific decision overrides a group decision,
-  which overrides a range decision.
-- **Analysis** compares lists against observed traffic and simulates policy
-  changes before you apply them.
-- **Logs and Investigation** explain filtering decisions and provide admin-only,
-  read-only SQL over recent SQLite logs and older Parquet archives using DuckDB.
-- **Rewrites** maps local names to IP addresses through the UI or API.
-- **Upstream routing** supports UDP, TCP, DNS-over-TLS (DoT), and DNS-over-HTTPS
-  (DoH), with weighted, random, or blended selection and domain-specific routes.
-- **Operations** includes configuration sync between nodes, API tokens,
-  Prometheus metrics, optional Loki log export, and local configuration backup
-  and restore.
-
-Clients connect to Svart over **plain DNS on UDP or TCP**. DoH and DoT support
-is for outgoing queries to upstream resolvers. HTTPS on the admin UI does not
-create a DoH listener.
 
 ## Quick start
 
@@ -75,74 +79,41 @@ For source builds, prerequisites, TLS, and development commands, see
 and [Operations](docs/operations.md). The running server serves its API reference
 at `/docs` and its OpenAPI document at `/docs/swagger.json`.
 
-## How it compares
+## Choosing Svart
 
-Svart grew from the author's use of Pi-hole and AdGuard Home. Its focus is the
-combination of traffic-based list comparison, a range/group/client policy
-cascade, and SQL investigation across recent and archived history. These are
-design priorities, not a claim that other projects lack analytics or APIs.
+Choose Svart if you want traffic-based list comparison, an explicit
+range/group/device policy cascade, and SQL investigation in one application.
+It is especially useful when you want stricter filtering on servers, different
+rules for work and family devices, and a way to trace why a particular name
+was allowed or blocked.
 
-| Project | Capabilities to consider alongside Svart |
-|---|---|
-| **Pi-hole** | DNS filtering with a dashboard, optional DHCP, client/group list assignments, and a documented REST API. See its [overview](https://docs.pi-hole.net/), [group examples](https://docs.pi-hole.net/group_management/example/), and [API documentation](https://docs.pi-hole.net/api/). |
-| **AdGuard Home** | DNS filtering with per-client settings, built-in DHCP, encrypted upstreams, and client-facing DoH/DoT servers. Its broader filtering syntax includes record-type modifiers and regular expressions that Svart does not fully implement. See its [official feature overview](https://github.com/AdguardTeam/AdGuardHome) and [DNS filtering syntax](https://adguard-dns.io/kb/general/dns-filtering-syntax/). |
-| **Technitium DNS Server** | Authoritative and recursive DNS, DNSSEC validation, zone management, DHCP, encrypted DNS listeners/forwarders, clustering, and an HTTP API. It also offers per-client advanced blocking through a DNS App. See its [official feature list](https://technitium.com/dns/). |
-| **Svart** | A forwarding DNS sinkhole with the analysis and policy workflow above. No DHCP, authoritative zone service, recursive resolver, or client-facing DoH/DoT listener. |
+Pi-hole and AdGuard Home are established alternatives that also offer query
+visibility, per-client controls, and APIs. Pi-hole includes optional DHCP;
+AdGuard Home also provides encrypted DNS listeners for clients. See their
+[client/group policy examples](https://docs.pi-hole.net/group_management/example/)
+and [client settings](https://adguard-dns.io/kb/adguard-home/clients/).
 
-Comparison sources checked September 26, 2026. For reproducible performance
-measurements, workload definitions, and limitations, see
-[Benchmarks](docs/benchmarks.md). Performance depends on list contents, cache
-state, logging, hardware, and the workload; historical numbers are not a claim
-about the current release. The final backend measurements show millisecond
-manual edits with three million rules, alongside lower logged DNS throughput
-and higher tail latency after backlog. That large-list run exceeded 1 GiB process
-RSS; see [memory sizing and ARM limitations](docs/operations.md#resource-use).
+Svart uses in-memory policy snapshots and caches; list analysis runs on demand.
+[Reproducible benchmarks](docs/benchmarks.md) document throughput, logging,
+latency, and memory tradeoffs rather than promising universal performance parity.
 
-## Known limitations
+## Scope and compatibility
 
-DNS filtering sees names, not the contents of a web page. It cannot distinguish
-an advertisement from wanted content on the same hostname. Svart only observes
-queries sent to it: a device using another resolver bypasses its filtering and
-query history. Clients behind the same source IP share that identity.
-
-Svart supports DNS-oriented AdGuard syntax, including Go-compatible regexes,
-record-type restrictions, rule-local exclusions and list-local priorities.
-Unsupported restrictions skip the whole rule, including negative client/tag
-restrictions. Filter Lists shows applied, unsupported and invalid counts with
-complete paginated reasons. A malformed supported regex that fails compilation
-rejects the refresh and keeps the previous generation.
-
-| Not supported | Consequence | Example |
-|---|---|---|
-| Regex features outside Go's syntax, such as backreferences or lookaround | A recognized regex that cannot compile rejects the refresh. | `/^(ads)\1\.example$/` cannot compile; use an equivalent Go-compatible expression. |
-| Rules limited to clients or tags (`$client`, `$ctag`), including exclusions | The whole rule is skipped. Use Svart's Assignments for different device policies. | `\|\|example.com^$client=~192.168.1.10` is not applied to anyone. |
-| Address ranges (`://46.148.113.`) | Returned addresses in that range are not blocked by the range rule. Exact address entries are supported. | `46.148.113.9` can match a returned address. |
-| Browser-only rules (`$third-party`, `$script`, `$domain=`, `$popup`, element hiding `##`) | These browser contexts and page elements cannot be enforced by Svart's DNS filter. | Use a browser content blocker for page-level rules. |
-| Wildcards in `$denyallow` values | The complete rule is rejected; exclusions currently accept domain names and their subdomains. | `$denyallow=example.*` does not become an unrestricted block. |
-| `$dnsrewrite` in a list | The list's rewrite is not applied. | Configure local name-to-IP mappings in Rewrites. |
-
-Supported syntax also has deliberate differences from
-[AdGuard's rule model](https://adguard-dns.io/kb/general/dns-filtering-syntax/):
-
-- **Plain domains and hosts entries match subdomains**, preserving Svart's
-  existing list behavior. Explicit `|example.com|` matches only that name.
-- **`@@` exceptions and `$badfilter` cancellation are list-local.** Another
-  assigned list can still block the name. Cancellation compares the full rule,
-  excluding only the `$badfilter` modifier.
-- **`$important` changes priority inside its list.** Important exceptions beat
-  important blocks, which beat ordinary exceptions and blocks. Svart's existing
-  Assignment precedence and explicit allows still apply afterwards.
-- **The existing bare `*` rule remains supported.** It matches every name; AdGuard rejects an unrestricted rule this broad.
-- **Regex matching uses Go's regular-expression syntax.** Patterns compile
-  during refresh and snapshot construction, never during a DNS lookup.
-
-[List syntax](docs/configuration.md#list-syntax) documents the supported forms.
-Query logging coalesces high-rate client/domain loops into counted presentation
-rows. The durable journal and separate [raw archives](docs/raw-archives.md)
-retain the original events, including individual timestamps and latency, until
-configured retention expires them. DNS replies remain asynchronous: an abrupt
-crash can lose the newest events still in memory. See
-[logging durability](docs/logging-durability.md) for that boundary.
+- Clients use **DNS over UDP or TCP**. DoH and DoT are upstream transports;
+  Svart does not supply DHCP or recursive resolution.
+- DNS visibility covers queries sent to Svart and the source IP it receives.
+  Devices behind the same source IP share that identity; traffic sent to another
+  resolver requires separate network controls or telemetry.
+- Analysis compares list matches against observed domains. The Policy Simulator
+  evaluates current assignments; it does not replay a complete hypothetical
+  policy change or predict whether every application will still work.
+- Filter Lists reports applied, unsupported, and invalid rules. A failed refresh
+  keeps the previous generation. See [list syntax](docs/configuration.md#list-syntax)
+  for supported AdGuard-style rules and deliberate differences.
+- Investigation is supported on Linux amd64. See [resource sizing and other
+  platforms](docs/operations.md#resource-use). Query history has configurable
+  retention and an explicit [logging durability](docs/logging-durability.md)
+  boundary; [raw archives](docs/raw-archives.md) retain original events.
 
 ## Documentation and contributing
 
@@ -159,7 +130,7 @@ consistency, Go tests and race detection, all four language coverage gates,
 public-export checks, dependency vulnerability checks, and frontend license
 checks. Each owned production language must meet at least 80% coverage; the
 frontend also gates branches and functions. Run `make e2e` for the isolated
-browser, two-node DNS, backup/restart, and archive-ownership checks. CI runs both
+browser, two-node DNS, backup/restart, and archive-ownership checks. The canonical Forgejo CI runs both
 against the exact event commit. See [Contributing](CONTRIBUTING.md) for tool
 prerequisites and [the E2E guide](scripts/e2e/README.md) for its precise scope.
 

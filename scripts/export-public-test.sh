@@ -9,7 +9,7 @@ fail() {
 	echo "FAIL: $*; retained fixtures: $WORK" >&2
 	exit 1
 }
-mkdir -p "$WORK/source/scripts" "$WORK/source/frontend" "$WORK/source/deploy" "$WORK/source/.forgejo" "$WORK/source/web/data" "$WORK/source/docs/images"
+mkdir -p "$WORK/source/cmd/svart-dns" "$WORK/source/scripts" "$WORK/source/frontend" "$WORK/source/deploy" "$WORK/source/.forgejo" "$WORK/source/web/data" "$WORK/source/docs/images"
 for name in export-public.sh check-public.sh check-public-archives.py check-public-secrets.mjs public-secret-fixtures.json check-licenses.mjs check-doc-links.mjs; do
 	cp "$ROOT/scripts/$name" "$WORK/source/scripts/"
 done
@@ -20,7 +20,7 @@ printf 'private CI fixture\n' >"$WORK/source/.forgejo/marker"
 printf 'ranking fixture\n' >"$WORK/source/web/data/tranco-top10k.csv"
 printf '{"packages":{}}\n' >"$WORK/source/frontend/package-lock.json"
 printf 'module example.com/export-fixture\n\ngo 1.24\n' >"$WORK/source/go.mod"
-printf 'package main\nfunc main() {}\n' >"$WORK/source/main.go"
+printf 'package main\nfunc main() {}\n' >"$WORK/source/cmd/svart-dns/main.go"
 printf 'verify:\n\tgo test ./...\n' >"$WORK/source/Makefile"
 git -C "$WORK/source" init -q -b main
 git -C "$WORK/source" add -A

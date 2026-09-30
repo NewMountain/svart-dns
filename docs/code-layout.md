@@ -1,8 +1,12 @@
 # Code layout
 
-The backend is one Go `package main` at the repository root. Files group related
-features, rather than defining separately deployed services. The frontend is a
-React/TypeScript application built by Vite and embedded in the Go binary.
+The DNS application lives in `internal/svart`, with its Go tests beside the
+implementation they exercise. `cmd/svart-dns/main.go` is the small executable
+entrypoint. Root `assets.go` embeds the React UI, API documentation, and local
+DuckDB extension from their existing source directories.
+
+The backend filenames below are relative to `internal/svart` unless another
+directory is shown. Files group related features within one application process.
 
 | Area | Start here |
 |---|---|
@@ -19,7 +23,7 @@ React/TypeScript application built by Vite and embedded in the Go binary.
 | Query logging, overflow spool, log visibility | `logwriter.go`, `logspool.go`, `query_log_policy.go` |
 | Summary Parquet archival and SQL investigation | `archiver.go`, `investigate.go` |
 | Raw event archive ownership, streaming, retention and verification | `rawarchive.go`, `rawarchive_stream.go`, `rawarchive_worker.go`, `rawarchive_verify.go` |
-| List comparison and simulation | `analysis.go` |
+| List comparison and current-policy simulation | `analysis.go` |
 | Dashboard and stats | `dashboard_stats.go`, `dashboard_http.go`, `stats_api.go`, `system_stats.go` |
 | First-run setup, users, sessions, tokens | `setup.go`, `auth.go`, `session.go`, `login_limiter.go` |
 | HTTP security and configuration import/export | `http_middleware.go`, `config.go` |
@@ -41,7 +45,7 @@ internal filenames do not change the user-facing names.
 CSS. Tests sit beside the components/helpers they exercise. `frontend/dist/`
 is generated and embedded at build time; do not hand-edit it.
 
-The API contract lives in `api_contract_test.go` and the concrete Go request/response
+The API contract lives in `internal/svart/api_contract_test.go` and the concrete Go request/response
 DTOs. `internal/apigen/` uses those types and handler metadata to generate
 `docs/swagger.json` (OpenAPI 3.1), `docs/api-reference.md`, and the frontend
 `api/generated.ts` runtime validators/types and `api/operations.ts` transport.
@@ -59,7 +63,8 @@ extension used by Investigation.
 ## Build, tests, and operations
 
 - `Makefile` contains the local build and verification commands.
-- `*_test.go` exercises backend behavior; benchmarks also live in these files.
+- `internal/svart/*_test.go` exercises application behavior and contains unit benchmarks.
+- `cmd/svart-dns/` contains the executable entrypoint; `assets.go` owns embedded assets.
 - `benchmarks/` contains runnable throughput, footprint, and comparison harnesses.
 - `cmd/healthcheck/` builds the container's small health-check binary.
 - `Dockerfile` builds the frontend and CGO backend, then packages the runtime.
